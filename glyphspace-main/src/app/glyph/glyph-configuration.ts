@@ -14,7 +14,7 @@ export class GlyphConfiguration {
   private _radius = 0;
   private _scaleLinear = false;
 
-  private _glyphType: GlyphType = GlyphType.Star;
+  private _glyphType: GlyphType = GlyphType.Flower;
 
   private options: GlyphOption[] = [
     { property: 'useCoordinateSystem', label: 'Coordinate System' },

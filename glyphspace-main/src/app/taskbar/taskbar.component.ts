@@ -64,13 +64,7 @@ export class TaskbarComponent implements AfterViewInit, OnDestroy {
     const color = 'rgba(52, 152, 219, 0.6)';
     const radius = Math.min(w, h) * 0.28;
 
-    if (config.glyphType === GlyphType.Star) {
-      drawRadarChart(ctx, radius, color, sampleGlyph, activeFeatures, this.config.featureLabels, config);
-    } else if (config.glyphType === GlyphType.Flower) {
-      drawFlowerGlyph(ctx, radius, color, sampleGlyph, activeFeatures, this.config.featureLabels, config);
-    } else {
-      drawWhiskerGlyph(ctx, radius, color, sampleGlyph, activeFeatures, this.config.featureLabels, config);
-    }
+    drawFlowerGlyph(ctx, radius, color, sampleGlyph, activeFeatures, this.config.featureLabels, config);
   }
 
   get colorFeatureLabel(): string {
