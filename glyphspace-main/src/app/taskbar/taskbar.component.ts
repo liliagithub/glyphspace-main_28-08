@@ -1,7 +1,14 @@
-import { Component, NgZone } from '@angular/core';
+import { Component, NgZone, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskLoggerService, TaskType, TaskMode } from '../services/task-logger.service';
+import { ConfigService } from '../services/config.service';
+import { COLOR_SCALES, getContinuousGradient, getCategoricalColors } from '../shared/interfaces/color-scale';
+import { drawRadarChart, drawWhiskerGlyph, drawFlowerGlyph } from '../shared/helpers/d3-helper';
+import { GlyphObject } from '../glyph/glyph-object';
+import { GlyphConfiguration } from '../glyph/glyph-configuration';
+import { GlyphType } from '../shared/enum/glyph-type';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-taskbar',
@@ -10,18 +17,80 @@ import { TaskLoggerService, TaskType, TaskMode } from '../services/task-logger.s
   templateUrl: './taskbar.component.html',
   styleUrl: './taskbar.component.scss'
 })
-export class TaskbarComponent {
+export class TaskbarComponent implements AfterViewInit, OnDestroy {
   TaskType = TaskType;
+  GlyphType = GlyphType;
   panelOpen = false;
   participantId = '';
   selectedMode: TaskMode = 'semantic-zoom';
   pendingModeIntro: TaskMode | null = null;
   private tickInterval: any = null;
+  private configSub = new Subscription();
 
-  constructor(public logger: TaskLoggerService, private ngZone: NgZone) {}
+  @ViewChild('legendCanvas') legendCanvasRef!: ElementRef<HTMLCanvasElement>;
 
-  get currentIndex(): number {
-    return this.logger.currentTaskIndex;
+  constructor(public logger: TaskLoggerService, public config: ConfigService, private ngZone: NgZone) {}
+
+  ngAfterViewInit(): void {
+    this.configSub.add(
+      this.config.glyphConfigSubject$.subscribe(() => this.drawLegendGlyph())
+    );
+    setTimeout(() => this.drawLegendGlyph());
+  }
+
+  private drawLegendGlyph(): void {
+    const canvas = this.legendCanvasRef?.nativeElement;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+
+    const activeFeatures = this.config.activeFeatures;
+    if (activeFeatures.length === 0) return;
+
+    const sampleGlyph = { id: 'legend', currentContext: 1, features: { '1': {} as Record<string, number> } } as unknown as GlyphObject;
+    for (const f of activeFeatures) {
+      sampleGlyph.features['1'][f] = 0.5;
+    }
+
+    const config = this.config.getConfiguration();
+    const color = 'rgba(52, 152, 219, 0.6)';
+    const radius = Math.min(w, h) * 0.28;
+
+    if (config.glyphType === GlyphType.Star) {
+      drawRadarChart(ctx, radius, color, sampleGlyph, activeFeatures, this.config.featureLabels, config);
+    } else if (config.glyphType === GlyphType.Flower) {
+      drawFlowerGlyph(ctx, radius, color, sampleGlyph, activeFeatures, this.config.featureLabels, config);
+    } else {
+      drawWhiskerGlyph(ctx, radius, color, sampleGlyph, activeFeatures, this.config.featureLabels, config);
+    }
+  }
+
+  get colorFeatureLabel(): string {
+    const feature = this.config.colorFeature;
+    if (!feature) return '';
+    const labels = this.config.featureLabels;
+    return labels[feature] || feature;
+  }
+
+  get colorGradientStyle(): string {
+    const feature = this.config.colorFeature;
+    if (!feature) return '';
+    const scaleId = this.config.colorRange;
+    const scale = COLOR_SCALES.find(s => s.id === scaleId) || COLOR_SCALES[0];
+    if (scale.type === 'categorical') {
+      const colors = getCategoricalColors(scale);
+      const stops = colors.map((c, i) => `${c} ${(i / colors.length) * 100}%, ${c} ${((i + 1) / colors.length) * 100}%`).join(', ');
+      return `linear-gradient(to right, ${stops})`;
+    }
+    return getContinuousGradient(scale);
   }
 
   get totalTasks(): number {
@@ -45,6 +114,7 @@ export class TaskbarComponent {
     this.logger.startStudy(this.participantId.trim(), this.selectedMode);
     this.panelOpen = true;
     this.startTick();
+    setTimeout(() => this.drawLegendGlyph());
   }
 
   private nextTaskMode(): TaskMode | null {
@@ -61,6 +131,7 @@ export class TaskbarComponent {
     this.logger.nextTask();
     if (this.currentIndex >= this.totalTasks) {
       this.stopTick();
+      this.exportResults();
     }
   }
 
@@ -70,6 +141,7 @@ export class TaskbarComponent {
 
   dismissIntro(): void {
     this.pendingModeIntro = null;
+    setTimeout(() => this.drawLegendGlyph());
   }
 
   exportResults(): void {
@@ -95,6 +167,11 @@ export class TaskbarComponent {
     }
   }
 
+  ngOnDestroy(): void {
+    this.configSub.unsubscribe();
+    this.stopTick();
+  }
+
   private startTick(): void {
     this.stopTick();
     this.ngZone.runOutsideAngular(() => {
@@ -111,6 +188,10 @@ export class TaskbarComponent {
       clearInterval(this.tickInterval);
       this.tickInterval = null;
     }
+  }
+
+  get currentIndex(): number {
+    return this.logger.currentTaskIndex;
   }
 
   getModeLabel(mode: string): string {

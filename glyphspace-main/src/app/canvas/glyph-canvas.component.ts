@@ -953,13 +953,6 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
     this.mouseInside = true;
     this.resetMouseIdleTimer();
 
-    if (this.selectionSvc.isMouseOverOverlay(event) || this.tooltipComponent.isFixed()) {
-      this.selectionSvc.isSelecting = false;
-      this.tooltipComponent.cancelHoverPopup();
-      // Skip THREE.js interaction
-      return;
-    }
-
     this.updateMousePositions(event);
 
     if (this.magicLensComponent.isActive() && this.magicLensComponent.isFixed()) {
@@ -989,6 +982,13 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
         this.rendererSvc.renderer
       );
       if (change) this.magicLensComponent.renderMagicLensGlyphs(this.selectedTimestamp, this.selectedAlgorithm);
+      return;
+    }
+
+    if (this.selectionSvc.isMouseOverOverlay(event) || this.tooltipComponent.isFixed()) {
+      this.selectionSvc.isSelecting = false;
+      this.tooltipComponent.cancelHoverPopup();
+      // Skip THREE.js interaction
       return;
     }
 
