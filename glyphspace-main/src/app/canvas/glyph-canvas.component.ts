@@ -44,6 +44,7 @@ import {
 } from '../shared/constants/canvas-constants';
 import { DataProcessorService } from '../services/data-processor';
 import { buildGlyphRenderConfig, GlyphRenderConfig } from '../glyph/glyph-render-config';
+import { TaskLoggerService } from '../services/task-logger.service';
 
 @Component({
   selector: 'glyph-canvas',
@@ -98,6 +99,9 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
   private mouseIdleTimer: ReturnType<typeof setTimeout> | undefined;
   private mouseDownTime = 0;
 
+  // Study task mode enforcement
+  private isLensForced = false;
+
   // Overlay controls
   canvasActivated = false;
   showSettings = false;
@@ -118,7 +122,8 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
     private filterService: FilterService,
     public cameraSvc: CanvasCameraService,
     public rendererSvc: CanvasRendererService,
-    public selectionSvc: CanvasSelectionService
+    public selectionSvc: CanvasSelectionService,
+    private taskLogger: TaskLoggerService
   ) {}
 
   private buildRenderConfig(): GlyphRenderConfig {
@@ -310,6 +315,33 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
         );
       })
     );
+    this.configSub.add(
+      this.taskLogger.currentTaskIndex$.subscribe(() => {
+        this.applyTaskModeConstraints();
+        if (this.taskLogger.currentTaskIndex >= 0) {
+          this.fitToView();
+        }
+      })
+    );
+  }
+
+  private applyTaskModeConstraints(): void {
+    const mode = this.taskLogger.currentMode;
+    this.isLensForced = mode === 'magic-lens';
+
+    if (!this.magicLensComponent) return;
+
+    if (this.isLensForced) {
+      if (!this.magicLensComponent.isActive()) {
+        this.magicLensComponent.toggle(this.lastMousePosition, true);
+      }
+      this.fitToView();
+      this.canvasContainer?.nativeElement.classList.add('lensing');
+    } else if (this.magicLensComponent.isActive()) {
+      this.magicLensComponent.toggle(this.lastMousePosition, false);
+      this.magicLensComponent.clearLensGlyphs();
+      this.canvasContainer?.nativeElement.classList.remove('lensing');
+    }
   }
 
   private observeResize() {
@@ -410,9 +442,11 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
   }
 
   toggleMagicLens(doToggle = true): void {
+    if (this.isLensForced) return;
     this.magicLensComponent.toggle(this.lastMousePosition, doToggle);
     this.tooltipComponent.toggleFixation(false);
     this.tooltipComponent.hideTooltip();
+    this.taskLogger.logLensToggle(this.magicLensComponent.isActive());
     if (this.magicLensComponent.isActive()) {
       this.tooltipComponent.cancelHoverPopup();
       this.clearHoveredGlyph();
@@ -705,6 +739,36 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
       this.config.redrawGlyph(this.currentHoveredObject);
     }
   }
+
+  private playBeep(): void {
+    try {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      gain.gain.value = 0.2;
+      osc.start();
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+      osc.stop(ctx.currentTime + 0.12);
+    } catch {}
+  }
+
+  private selectGlyphInLens(event: MouseEvent): void {
+    const hit = this.magicLensComponent.doHitTest(event);
+    if (hit) {
+      const glyph = getGlyphFromObject(hit);
+      if (glyph) {
+        if (this.taskLogger.isRunning) {
+          this.taskLogger.logSolution(glyph.id);
+          this.playBeep();
+        }
+        (this.selectionSvc.selectionFilter as IdFilter).toggle(glyph.id);
+        this.selectionSvc.applyFilters();
+      }
+    }
+  }
   //#endregion
 
   //#region HostListeners
@@ -759,6 +823,7 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
     [
       'l',
       () => {
+        if (this.isLensForced) return;
         this.clearHoveredGlyph();
         this.toggleMagicLens();
         this.magicLensComponent.updateMagicLens(
@@ -818,7 +883,13 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
     const isClick = distance < CLICK_DISTANCE_THRESHOLD && elapsedTime < CLICK_TIME_THRESHOLD_MS;
 
     if (isClick && this.magicLensComponent.isActive()) {
-      this.toggleFixMagicLens();
+      if (!this.magicLensComponent.isFixed()) {
+        this.toggleFixMagicLens();
+      } else if (this.magicLensComponent.isPointInsideLens(event.clientX, event.clientY)) {
+        this.selectGlyphInLens(event);
+      } else {
+        this.toggleFixMagicLens();
+      }
       return;
     }
 
@@ -830,6 +901,10 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
     if (isClick && !this.selectionSvc.selectionMode) {
       if (this.currentHoveredObject != null) {
         this.tooltipComponent.toggleFixation();
+        if (this.taskLogger.isRunning && !this.magicLensComponent.isActive()) {
+          this.taskLogger.logSolution(this.currentHoveredObject.id);
+          this.playBeep();
+        }
       }
       return;
     }
@@ -888,6 +963,7 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
     this.updateMousePositions(event);
 
     if (this.magicLensComponent.isActive() && this.magicLensComponent.isFixed()) {
+      this.lastMousePosition.set(event.clientX, event.clientY);
       const closestObject: THREE.Object3D | null = this.magicLensComponent.doHitTest(event);
       if (closestObject != null) {
         const hoveredGlyph = getGlyphFromObject(closestObject);
@@ -905,6 +981,7 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
 
     if (this.magicLensComponent.isActive()) {
       this.lastMousePosition.set(event.clientX, event.clientY);
+      this.taskLogger.logLensMove(event.clientX, event.clientY);
       this.magicLensComponent.renderLens(this.lastMousePosition);
       const change = this.magicLensComponent.updateMagicLens(
         this.lastMousePosition,
@@ -920,7 +997,10 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
       this.selectionSvc.updateSelectionBox();
     } else if (this.cameraSvc.isPanning && !this.selectionSvc.selectionMode) {
       this.tooltipComponent.cancelHoverPopup();
+      const prevX = this.lastMousePosition.x;
+      const prevY = this.lastMousePosition.y;
       this.cameraSvc.pan(this.lastMousePosition, event);
+      this.taskLogger.logPan(event.clientX - prevX, event.clientY - prevY);
       this.rendererSvc.requestRender(RenderTask.SceneRender);
     } else if (
       !this.rendererSvc.needsRender.has(RenderTask.ForceSimulation) &&
@@ -983,8 +1063,7 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
     if (
       !this.cameraSvc.camera ||
       !this.rendererSvc.renderer ||
-      this.magicLensComponent.isActive() ||
-      this.tooltipComponent.isFixed()
+      this.magicLensComponent.isActive()
     )
       return;
     this.tooltipComponent.cancelHoverPopup();
@@ -1002,6 +1081,7 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
       this.rendererSvc.renderer.domElement
     );
     this.handleZoomLevelChange(oldZoom, newZoom);
+    this.taskLogger.logZoomChange(oldZoom, newZoom);
     this.rendererSvc.requestRender(RenderTask.SceneRender);
   }
 

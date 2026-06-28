@@ -347,6 +347,17 @@ export class MagiclensComponent implements AfterViewInit, OnDestroy {
     return this.magicLensActive;
   }
 
+  isPointInsideLens(clientX: number, clientY: number): boolean {
+    const rect = this.lensCanvasRef?.nativeElement.getBoundingClientRect();
+    if (!rect) return false;
+    return (
+      clientX >= rect.left &&
+      clientX <= rect.right &&
+      clientY >= rect.top &&
+      clientY <= rect.bottom
+    );
+  }
+
   isFixed(): boolean {
     return this.isLensFixed;
   }

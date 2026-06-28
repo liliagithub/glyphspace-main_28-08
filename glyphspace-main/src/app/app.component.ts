@@ -6,6 +6,7 @@ import { checkTextInput } from './shared/helpers/angular-helper';
 import { MenuBarComponent } from './menubar/menubar.component';
 import { ToastComponent } from './shared/components/toast/toast.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
+import { TaskbarComponent } from './taskbar/taskbar.component';
 
 interface GlyphCanvasItem {
   id: number;
@@ -16,7 +17,7 @@ interface GlyphCanvasItem {
 @Component({
   standalone: true,
   selector: 'app-root',
-  imports: [GlyphCanvasComponent, MenuBarComponent, ToastComponent, SidebarComponent],
+  imports: [GlyphCanvasComponent, MenuBarComponent, ToastComponent, SidebarComponent, TaskbarComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
 })

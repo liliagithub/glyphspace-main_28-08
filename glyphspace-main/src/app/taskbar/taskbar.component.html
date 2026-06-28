@@ -1,0 +1,168 @@
+<!-- Toggle tab -->
+<div class="taskbar-toggle" (click)="togglePanel()" [class.active]="panelOpen">
+  <span class="toggle-icon">{{ panelOpen ? '◄' : '►' }}</span>
+  <span class="toggle-label">Studie</span>
+</div>
+
+<!-- Panel -->
+<div class="taskbar-panel" [class.open]="panelOpen" (click)="$event.stopPropagation()">
+
+  <!-- NOT STARTED -- Welcome / Registration -->
+  <ng-container *ngIf="!logger.studyStarted">
+    <div class="welcome">
+      <h2>Glyphspace Studie</h2>
+      <p class="intro">
+        In dieser Studie werden Ihnen {{ totalTasks }} Aufgaben aus 4 Kategorien gestellt:
+        <strong>Identifikation, Vergleich, Mustererkennung</strong> und
+        <strong>Multivariate Analyse</strong>.
+      </p>
+      <p class="intro">
+        Jede Aufgabe wird in einem von zwei Modi durchgeführt:
+        <span class="badge-zoom">Zoom</span> (Semantisches Zoomen) oder
+        <span class="badge-lens">Linse</span> (Magic Lens).
+      </p>
+      <p class="intro">
+        Erkunden Sie die Visualisierung und <strong>klicken Sie auf ein Glyph</strong>,
+        um Ihre Antwort zu erfassen. Drücken Sie <strong>Weiter</strong>, um fortzufahren.
+      </p>
+
+      <div class="registration">
+        <label class="reg-label">Teilnehmer-ID</label>
+        <input
+          class="reg-input"
+          type="text"
+          [(ngModel)]="participantId"
+          placeholder="z. B. P01"
+          (keydown.enter)="canStart && startStudy()"
+        />
+
+        <label class="reg-label">Startmodus</label>
+        <div class="mode-choice">
+          <button
+            class="mode-btn"
+            [class.active]="selectedMode === 'semantic-zoom'"
+            (click)="selectedMode = 'semantic-zoom'"
+          >
+            <span class="mode-icon">🔍</span>
+            <span class="mode-name">Zoom</span>
+            <span class="mode-desc">Semantisches Zoomen</span>
+          </button>
+          <button
+            class="mode-btn"
+            [class.active]="selectedMode === 'magic-lens'"
+            (click)="selectedMode = 'magic-lens'"
+          >
+            <span class="mode-icon">🔮</span>
+            <span class="mode-name">Linse</span>
+            <span class="mode-desc">Magic Lens</span>
+          </button>
+        </div>
+
+        <button class="start-btn" [class.disabled]="!canStart" [disabled]="!canStart" (click)="startStudy()">
+          Studie starten
+        </button>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- MODE INTRO -->
+  <ng-container *ngIf="logger.studyStarted && !isStudyComplete() && pendingModeIntro">
+    <div class="welcome">
+      <h2 *ngIf="pendingModeIntro === 'semantic-zoom'">Semantisches Zoomen</h2>
+      <h2 *ngIf="pendingModeIntro === 'magic-lens'">Magic Lens</h2>
+
+      <ng-container [ngSwitch]="pendingModeIntro">
+        <ng-container *ngSwitchCase="'semantic-zoom'">
+          <p class="intro">
+            Mit dem <span class="badge-zoom">Zoom</span>-Werkzeug können Sie in die Visualisierung
+            hinein- und herauszoomen. Durch semantisches Zoomen werden bei höheren Zoomstufen
+            zusätzliche Detailinformationen zu jedem Glyph eingeblendet.
+          </p>
+          <p class="intro">
+            Nutzen Sie das <strong>Mausrad</strong>, um zu zoomen, oder die entsprechenden
+            Steuerelemente in der Benutzeroberfläche. Ziehen Sie die Visualisierung, um
+            zu navigieren.
+          </p>
+        </ng-container>
+
+        <ng-container *ngSwitchCase="'magic-lens'">
+          <p class="intro">
+            Die <span class="badge-lens">Linse</span> ist ein virtuelles Vergrößerungsglas, das
+            Detailinformationen zu den darunterliegenden Glyphen anzeigt.
+          </p>
+          <p class="intro">
+            <strong>Bewegen Sie die Linse</strong> mit der Maus über die Visualisierung.
+            <strong>Klicken Sie auf die Linse</strong>, um sie zu fixieren. Klicken Sie dann
+            <strong>auf ein Glyph innerhalb der Linse</strong>, um Ihre Antwort auszuwählen.
+            Klicken Sie außerhalb der Linse, um sie wieder zu lösen.
+          </p>
+        </ng-container>
+      </ng-container>
+
+      <p class="intro">
+        <strong>Klicken Sie auf ein Glyph</strong>, um Ihre Antwort zu erfassen, und
+        dann auf <strong>Weiter</strong>, um fortzufahren.
+      </p>
+
+      <button class="intro-btn" (click)="dismissIntro()">Weiter</button>
+    </div>
+  </ng-container>
+
+  <!-- STUDY COMPLETE -->
+  <ng-container *ngIf="logger.studyStarted && isStudyComplete()">
+    <div class="complete">
+      <h2>Studie abgeschlossen!</h2>
+      <p>Alle {{ totalTasks }} Aufgaben wurden bearbeitet.</p>
+      <div class="summary-stats">
+        <div class="stat">
+          <span class="stat-val">{{ getCompletedCount() }}</span>
+          <span class="stat-lbl">Aufgaben</span>
+        </div>
+        <div class="stat">
+          <span class="stat-val">{{ (getElapsedMs() / 1000).toFixed(0) }}s</span>
+          <span class="stat-lbl">Gesamtzeit</span>
+        </div>
+      </div>
+      <button class="export-btn" (click)="exportResults()">Ergebnisse exportieren</button>
+      <button class="reset-btn" (click)="resetSession()">Neue Sitzung</button>
+    </div>
+  </ng-container>
+
+  <!-- RUNNING -->
+  <ng-container *ngIf="logger.studyStarted && !isStudyComplete() && !pendingModeIntro">
+    <div class="task-header">
+      <div class="task-counter">Aufgabe {{ currentIndex + 1 }} / {{ totalTasks }}</div>
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="getProgressPercent()"></div>
+      </div>
+    </div>
+
+    <div class="current-task" *ngIf="logger.currentTaskDef as task">
+      <div class="task-meta">
+        <span class="type-badge {{ task.type }}">{{ task.type }}</span>
+        <span class="mode-badge {{ task.mode }}">{{ getModeLabel(task.mode) }}</span>
+      </div>
+      <div class="task-name">{{ task.name }}</div>
+      <div class="task-desc">{{ task.description }}</div>
+    </div>
+
+    <div class="answer-section" *ngIf="logger.currentRun as run">
+      <div class="answer-status" [class.has-answer]="hasSolution()">
+        <span *ngIf="!hasSolution()">Klicken Sie auf ein Glyph, um Ihre Antwort zu erfassen</span>
+        <span *ngIf="hasSolution()">Ausgewähltes Glyph: <strong>{{ getSolutionGlyphId() }}</strong> (klicken Sie auf ein anderes, um zu ändern)</span>
+      </div>
+      <div class="timer">
+        <span class="timer-icon">⏱</span>
+        <span class="timer-value">{{ (getElapsedMs() / 1000).toFixed(1) }}s</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="skip-btn" (click)="skipTask()">Überspringen</button>
+      <button class="next-btn" (click)="nextTask()" [disabled]="!hasSolution()">
+        {{ isLastTask() ? 'Abschließen' : 'Weiter →' }}
+      </button>
+    </div>
+  </ng-container>
+
+</div>
