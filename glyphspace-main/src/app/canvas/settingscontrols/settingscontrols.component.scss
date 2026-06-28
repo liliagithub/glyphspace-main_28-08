@@ -1,0 +1,365 @@
+@use '../../../styles/variables' as v;
+@use '../../../styles/mixins' as m;
+
+.settings-panel {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background-color: v.$gray-100;
+  border-bottom: 1px solid v.$gray-200;
+  z-index: 400;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  position: relative;
+  height: 34px;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+
+  &.active {
+    background-color: v.$ui-active-bg;
+    border-bottom: 1px solid v.$ui-active-border;
+  }
+
+  .settings-overlay {
+    position: absolute;
+    top: 100%;
+    left: 12px;
+    margin-top: 4px;
+    background: v.$white;
+    border-radius: 10px;
+    box-shadow: v.$shadow-md;
+    z-index: 450;
+
+    .overlay-content {
+      padding: 12px;
+      min-width: 200px;
+    }
+  }
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.info-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1.2;
+
+  &.clickable {
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 3px 8px;
+    border: 1px solid v.$ui-border-light;
+    background: v.$white;
+
+    &:hover {
+      border-color: v.$ui-accent-blue;
+      background: v.$ui-hover-bg;
+    }
+
+    &.active {
+      border-color: v.$ui-accent-blue;
+      background: v.$ui-active-pressed-bg;
+      .info-label {
+        color: v.$gray-600;
+      }
+      .info-value {
+        color: v.$gray-800;
+      }
+    }
+  }
+}
+
+.info-label {
+  color: v.$gray-500;
+}
+
+.info-value {
+  color: v.$gray-800;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.color-swatch {
+  display: inline-block;
+  width: 48px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.settings-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+
+  .action-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: v.$gray-500;
+    padding: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    .material-icons {
+      font-size: 15px;
+    }
+
+    &:hover {
+      color: v.$gray-800;
+    }
+
+    &:disabled {
+      opacity: 0.3;
+      cursor: auto;
+      pointer-events: none;
+    }
+  }
+}
+
+.form-group {
+  @include m.form-group;
+  margin-bottom: 12px;
+}
+
+.menu-label {
+  @include m.menu-label;
+}
+
+.toggle-group.horizontal {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+
+  .toggle-btn {
+    flex: 1;
+    text-align: center;
+    padding: 10px 8px;
+  }
+}
+
+.toggle-btn {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid v.$ui-border-light;
+  background: v.$white;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+  color: v.$gray-700;
+
+  &:hover {
+    border-color: v.$ui-accent-blue;
+  }
+
+  &.active {
+    background: v.$color-blue-highlight;
+    border-color: v.$ui-accent-blue;
+    color: v.$white;
+  }
+}
+
+.animation-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.animation-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid v.$ui-border-light;
+  background: v.$white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+
+  i {
+    font-size: 18px;
+    color: v.$gray-700;
+  }
+
+  &:hover {
+    border-color: v.$ui-accent-blue;
+  }
+
+  &.active {
+    background: v.$ui-active-pressed-bg;
+    border-color: v.$ui-accent-blue;
+
+    i {
+      color: v.$color-blue-highlight;
+    }
+  }
+}
+
+.play-btn {
+  flex: 1;
+  justify-content: center;
+  border-radius: 10px;
+  min-width: 56px;
+}
+
+.speed-display {
+  min-width: 36px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: v.$ui-bg-light;
+  border: 1px solid v.$gray-200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: v.$gray-700;
+}
+
+/* Background projection status */
+.projection-status-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 150px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  pointer-events: auto;
+  @include m.styled-scrollbar-thin;
+}
+
+.projection-status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: v.$ui-bg-light;
+  border: 1px solid v.$gray-200;
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+
+  &.fading {
+    opacity: 0;
+  }
+
+  &.status-running {
+    background: v.$proj-running-bg;
+    border-color: v.$proj-running-border;
+  }
+
+  &.status-complete {
+    background: v.$proj-complete-bg;
+    border-color: v.$proj-complete-border;
+  }
+
+  &.status-error {
+    background: v.$proj-error-bg;
+    border-color: v.$proj-error-border;
+  }
+
+  &.status-pending {
+    background: v.$gray-100;
+    border-color: v.$gray-200;
+  }
+}
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.method-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: v.$gray-700;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+
+  .material-icons {
+    font-size: 16px;
+  }
+
+  &.running .material-icons {
+    color: v.$proj-running;
+  }
+
+  &.complete .material-icons {
+    color: v.$proj-complete;
+  }
+
+  &.error .material-icons {
+    color: v.$proj-error;
+  }
+
+  &.pending .material-icons {
+    color: v.$color-gray-border;
+  }
+}
+
+.progress-bar-mini {
+  height: 3px;
+  background: v.$gray-200;
+  border-radius: 2px;
+  overflow: hidden;
+
+  &.indeterminate .progress-fill-mini {
+    width: 30% !important;
+    animation: indeterminate-progress 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes indeterminate-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(200%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.progress-fill-mini {
+  height: 100%;
+  background: v.$proj-running;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}

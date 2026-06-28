@@ -1,0 +1,99 @@
+@use '../../../../styles/variables' as v;
+
+.help-tooltip-container {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.help-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  color: v.$gray-600;
+  transition: color 0.2s ease;
+
+  &:hover,
+  &:focus {
+    color: v.$active-color;
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid v.$active-color;
+    outline-offset: 2px;
+    border-radius: 50%;
+  }
+
+  .material-icons {
+    font-size: 18px;
+  }
+}
+
+.tooltip-content {
+  position: fixed;
+  z-index: 10000;
+  background: white;
+  border: 1px solid v.$gray-300;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 12px;
+  width: 280px;
+  max-width: 280px;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.15s ease,
+    visibility 0.15s ease;
+  pointer-events: none;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  &.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+
+.tooltip-text {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: v.$gray-800;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  max-width: 100%;
+
+  // Support for formatted help text
+  strong {
+    font-weight: 600;
+    color: v.$gray-800;
+  }
+
+  ul,
+  ol {
+    margin: 8px 0;
+    padding-left: 20px;
+  }
+
+  li {
+    margin: 4px 0;
+  }
+
+  code {
+    background: v.$gray-100;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+  }
+}

@@ -1,0 +1,282 @@
+@use '../../../../styles/variables' as v;
+@use '../../shared/wizard-shared' as wizard;
+
+.step2-column-selection {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.step-content {
+  flex: 1;
+  padding: 16px 32px;
+  max-width: 1150px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.step-header {
+  @include wizard.step-header;
+}
+
+.column-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  @include wizard.search-box($padding: 8px 12px, $icon-size: 20px, $border-color: v.$gray-200);
+  flex: 1;
+  min-width: 250px;
+  position: relative;
+}
+
+.selection-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-text {
+  @include wizard.btn-text;
+  font-size: 13px;
+}
+
+.selection-summary {
+  display: flex;
+  gap: 8px;
+}
+
+.count-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+
+  &.enabled {
+    background: rgba(v.$active-color, 0.1);
+    color: v.$active-color;
+  }
+
+  &.disabled {
+    background: v.$gray-200;
+    color: v.$gray-600;
+  }
+}
+
+// Table Layout
+.columns-table-container {
+  @include wizard.table-container;
+  overflow-x: hidden;
+  margin-bottom: 16px;
+}
+
+.columns-table {
+  @include wizard.table;
+  table-layout: fixed;
+
+  thead th {
+    .header-with-tooltip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    &.col-checkbox {
+      width: 44px;
+      padding-left: 12px;
+    }
+
+    &.col-name {
+      width: 20%;
+    }
+
+    &.col-type {
+      width: 10%;
+    }
+
+    &.col-count {
+      width: 8%;
+      text-align: right;
+    }
+
+    &.col-unique {
+      width: 10%;
+      text-align: right;
+    }
+
+    &.col-missing {
+      width: 10%;
+      text-align: right;
+    }
+
+    &.col-distribution {
+      width: auto;
+      text-align: center;
+    }
+  }
+
+  tbody tr.column-row {
+    transition: background-color 0.15s ease;
+
+    &.disabled {
+      opacity: 0.5;
+    }
+
+    &.has-issues {
+      background: rgba(v.$status-warning, 0.05);
+    }
+
+    td {
+      &.col-checkbox {
+        padding-left: 12px;
+
+        input[type='checkbox'] {
+          width: 16px;
+          height: 16px;
+          cursor: pointer;
+        }
+      }
+
+      &.col-count,
+      &.col-unique,
+      &.col-missing {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+
+      &.col-distribution {
+        text-align: center;
+        position: relative;
+
+        app-mini-histogram {
+          display: inline-block;
+          width: 112px;
+        }
+      }
+    }
+  }
+}
+
+.name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .name-text {
+    @include wizard.column-name-text;
+  }
+
+  .issue-icon {
+    font-size: 16px;
+    color: v.$status-warning;
+  }
+}
+
+.data-type-badge {
+  @include wizard.data-type-badge;
+}
+
+.unique-cell,
+.missing-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.unique-count,
+.missing-count {
+  font-weight: 500;
+  color: v.$gray-800;
+}
+
+.unique-percent,
+.missing-percent {
+  font-size: 11px;
+  color: v.$gray-600;
+
+  &.warn {
+    color: v.$status-warning;
+    font-weight: 600;
+  }
+}
+
+.text-muted {
+  color: v.$gray-500;
+  font-style: italic;
+}
+
+// No Results
+.no-results {
+  @include wizard.no-content($padding: 48px 24px, $text-size: 14px);
+}
+
+// Action Buttons
+.action-buttons {
+  @include wizard.action-buttons-footer;
+
+  .btn-secondary {
+    @include wizard.btn-secondary;
+  }
+
+  .buttons-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+  }
+}
+
+.warning-message {
+  @include wizard.message-warning;
+}
+
+.btn-primary {
+  @include wizard.btn-primary;
+}
+
+// Responsive
+@media (max-width: 900px) {
+  .columns-table {
+    thead th {
+      &.col-distribution {
+        display: none;
+      }
+    }
+
+    tbody td.col-distribution {
+      display: none;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .column-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-box {
+    min-width: 100%;
+  }
+
+  .selection-controls {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .columns-table {
+    font-size: 12px;
+
+    thead th,
+    tbody td {
+      padding: 8px;
+    }
+  }
+}

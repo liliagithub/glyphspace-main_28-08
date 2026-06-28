@@ -1,0 +1,51 @@
+@use '../../../../styles/variables' as v;
+@use '../../shared/wizard-shared' as wizard;
+
+.data-preview-table {
+  @include wizard.table-container;
+  overflow: hidden;
+}
+
+.no-data {
+  padding: 32px;
+  text-align: center;
+  color: v.$gray-500;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  @include wizard.table;
+
+  thead th,
+  tbody td {
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  thead th {
+    &.highlighted {
+      background: rgba(v.$active-color, 0.1);
+      color: v.$active-color;
+    }
+  }
+
+  tbody td {
+    &.highlighted {
+      background: rgba(v.$status-success, 0.1);
+    }
+  }
+}
+
+.table-footer {
+  padding: 10px 12px;
+  background: v.$gray-100;
+  border-top: 1px solid v.$gray-200;
+  font-size: 13px;
+  color: v.$gray-600;
+  text-align: center;
+}

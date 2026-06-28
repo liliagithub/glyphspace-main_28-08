@@ -1,0 +1,570 @@
+@use '../../shared/wizard-shared' as w;
+@use '../../../../styles/variables' as v;
+@use '../../../../styles/mixins' as m;
+
+.step3-configure-data-features {
+  display: flex;
+  flex-direction: column;
+
+  .step-content {
+    @include w.step-content;
+  }
+
+  .step-header {
+    @include w.step-header;
+  }
+
+  .info-box {
+    @include w.info-box;
+    position: relative;
+
+    .dismiss-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: v.$gray-500;
+      padding: 2px;
+      display: flex;
+
+      &:hover {
+        color: v.$gray-800;
+      }
+
+      .material-icons {
+        font-size: 16px;
+      }
+    }
+  }
+
+  .error-message {
+    @include w.message-error;
+  }
+
+  // ============================================================================
+  // List + Detail Layout
+  // ============================================================================
+
+  .config-layout {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  // ── Left Panel: Column List ──────────────────────────────────────────────────
+
+  .column-list-panel {
+    width: 320px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid v.$gray-300;
+    border-radius: 4px;
+    background: white;
+  }
+
+  .list-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid v.$gray-300;
+    background: v.$wizard-header-bg;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .search-box {
+    @include w.search-box;
+  }
+
+  .list-filters {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .filter-select {
+      @include w.select;
+      font-size: 12px;
+      padding: 4px 24px 4px 8px;
+      flex: 1;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      color: v.$gray-700;
+      white-space: nowrap;
+
+      input[type='checkbox'] {
+        width: 14px;
+        height: 14px;
+        cursor: pointer;
+        accent-color: v.$active-color;
+      }
+    }
+  }
+
+  .list-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: v.$gray-500;
+
+    .projection-count {
+      color: v.$active-color;
+      font-weight: 600;
+    }
+  }
+
+  .column-list {
+    flex: none;
+  }
+
+  .column-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid v.$gray-200;
+    border-left: 3px solid transparent;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background: v.$gray-100;
+    }
+
+    &.selected {
+      background: rgba(v.$active-color, 0.06);
+      border-left-color: v.$active-color;
+    }
+
+    &.has-issues {
+      .column-name {
+        color: v.$status-warning-dark;
+      }
+    }
+  }
+
+  .item-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .item-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .column-name {
+      @include w.column-name-text;
+      font-size: 13px;
+      @include m.text-truncate;
+    }
+  }
+
+  .item-bottom {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+
+    .config-summary {
+      font-size: 11px;
+      color: v.$gray-500;
+    }
+
+    .issue-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 8px;
+
+      &.missing {
+        background: rgba(v.$status-warning, 0.1);
+        color: v.$status-warning-dark;
+      }
+
+      &.outliers {
+        background: rgba(v.$status-error, 0.1);
+        color: v.$status-error-dark;
+      }
+    }
+  }
+
+  .item-projection {
+    flex-shrink: 0;
+
+    input[type='checkbox'] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: v.$active-color;
+    }
+  }
+
+  .data-type-badge {
+    @include w.data-type-badge;
+  }
+
+  .no-columns {
+    @include w.no-content($padding: 32px 16px, $icon-size: 32px);
+
+    .btn-clear {
+      @include w.btn-text;
+      font-size: 12px;
+      padding: 4px 10px;
+    }
+  }
+
+  // ── Right Panel: Detail Configuration ────────────────────────────────────────
+
+  .detail-panel {
+    flex: 1;
+    border: 1px solid v.$gray-300;
+    border-radius: 4px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .detail-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-bottom: 1px solid v.$gray-300;
+    background: v.$wizard-header-bg;
+
+    h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: v.$gray-800;
+      margin: 0;
+    }
+  }
+
+  .stats-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px 16px;
+    border-bottom: 1px solid v.$gray-200;
+    background: v.$wizard-header-bg;
+
+    .stat {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      background: white;
+      border: 1px solid v.$gray-200;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1;
+
+      .stat-label {
+        color: v.$gray-500;
+        font-weight: 400;
+      }
+
+      .stat-value {
+        font-weight: 600;
+        color: v.$gray-800;
+        font-variant-numeric: tabular-nums;
+
+        &.warn {
+          color: v.$status-warning-dark;
+        }
+      }
+
+      &.top-values .stat-value {
+        font-weight: 500;
+        max-width: 100px;
+        @include m.text-truncate;
+      }
+
+      &.stat-date .stat-value {
+        font-weight: 500;
+        font-size: 11px;
+      }
+    }
+  }
+
+  .config-section {
+    padding: 10px 16px;
+    border-bottom: 1px solid v.$gray-200;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: v.$gray-600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .section-count {
+      font-size: 11px;
+      font-weight: 600;
+      color: v.$status-warning-dark;
+      margin-left: auto;
+    }
+
+    .loading-indicator {
+      margin-left: auto;
+
+      .material-icons {
+        font-size: 16px;
+        color: v.$active-color;
+
+        &.spinning {
+          animation: spin 1s linear infinite;
+        }
+      }
+    }
+  }
+
+  .config-select {
+    @include w.select;
+    width: 100%;
+    max-width: 320px;
+    font-size: 13px;
+    padding: 6px 28px 6px 10px;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .fill-value-input {
+    @include w.input-base;
+    width: 100%;
+    max-width: 320px;
+    font-size: 13px;
+    padding: 6px 10px;
+    margin-top: 6px;
+  }
+
+  .outlier-controls {
+    display: flex;
+    gap: 12px;
+
+    .control-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+
+      label {
+        font-size: 11px;
+        color: v.$gray-600;
+      }
+
+      .config-select {
+        max-width: none;
+      }
+    }
+  }
+
+  .projection-section {
+    .projection-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: v.$gray-800;
+
+      input[type='checkbox'] {
+        @include w.checkbox;
+      }
+    }
+  }
+
+  .no-selection {
+    @include w.no-content($icon-size: 40px, $text-size: 14px);
+    flex: 1;
+    gap: 8px;
+  }
+
+  // ============================================================================
+  // Duplicates Section (unchanged)
+  // ============================================================================
+
+  .duplicates-section {
+    background: white;
+    border: 1px solid v.$gray-300;
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 16px;
+
+    h3 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: v.$gray-800;
+      margin-bottom: 12px;
+
+      .material-icons {
+        font-size: 20px;
+        color: v.$active-color;
+      }
+    }
+
+    .no-duplicates {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      background: rgba(v.$status-success, 0.05);
+      border-left: 3px solid v.$status-success;
+      border-radius: 2px;
+      color: v.$status-success-dark;
+      font-size: 13px;
+
+      .material-icons {
+        font-size: 18px;
+        color: v.$status-success;
+      }
+    }
+
+    .duplicate-info {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      .duplicate-summary {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        background: v.$gray-100;
+        border-radius: 4px;
+
+        .summary-stat {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+
+          .stat-large {
+            font-size: 24px;
+            font-weight: 700;
+            color: v.$status-warning-dark;
+          }
+
+          .stat-label {
+            font-size: 12px;
+            color: v.$gray-600;
+          }
+        }
+      }
+
+      .duplicate-action {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        .checkbox-label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          cursor: pointer;
+          font-size: 13px;
+          color: v.$gray-800;
+          font-weight: 500;
+
+          input[type='checkbox'] {
+            @include w.checkbox;
+          }
+        }
+
+        .impact-warning {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 10px;
+          background: rgba(v.$status-warning, 0.1);
+          border-radius: 3px;
+          font-size: 12px;
+          color: v.$status-warning-dark;
+
+          .material-icons {
+            font-size: 16px;
+          }
+        }
+      }
+
+      .btn-text {
+        @include w.btn-text;
+        justify-content: flex-start;
+        font-size: 12px;
+        padding: 6px 8px;
+      }
+
+      .duplicate-samples {
+        margin-top: 8px;
+        border: 1px solid v.$gray-300;
+        border-radius: 4px;
+        overflow-x: auto;
+        overflow-y: auto;
+        max-height: 250px;
+
+        .sample-table {
+          @include w.table;
+          font-size: 12px;
+        }
+      }
+    }
+  }
+
+  // ============================================================================
+  // Action Buttons
+  // ============================================================================
+
+  .action-buttons {
+    @include w.action-buttons-footer;
+
+    .btn-secondary {
+      @include w.btn-secondary;
+    }
+
+    .buttons-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: auto;
+    }
+
+    .warning-message {
+      @include w.message-warning;
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+
+    .btn-primary {
+      @include w.btn-primary;
+    }
+  }
+}

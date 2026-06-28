@@ -1,0 +1,174 @@
+@use '../../styles/variables' as v;
+@use './shared/wizard-shared' as w;
+
+.preprocessing-wizard {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: v.$wizard-content-bg;
+}
+
+.wizard-header {
+  background: v.$wizard-header-bg;
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: v.$gray-100;
+  border-bottom: 1px solid v.$gray-300;
+
+  h1 {
+    font-size: 16px;
+    font-weight: bold;
+    color: v.$gray-800;
+    margin: 0;
+  }
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(200, 200, 200, 0.5);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+
+  .material-icons {
+    font-size: 20px;
+    color: v.$gray-600;
+  }
+
+  &:hover {
+    background: rgba(180, 180, 180, 0.7);
+  }
+}
+
+.wizard-content {
+  flex: 1;
+  overflow-y: auto; // Allow scrolling for steps that need it (Step 1)
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: v.$wizard-content-bg;
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(v.$status-error, 0.1);
+  border-left: 3px solid v.$status-error;
+  color: v.$status-error-dark;
+  margin: 0 16px 16px;
+  border-radius: 2px;
+
+  .material-icons {
+    font-size: 20px;
+  }
+
+  .btn-close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+
+    .material-icons {
+      font-size: 18px;
+      color: v.$status-error-dark;
+    }
+  }
+}
+
+.step-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  > * {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+}
+
+.step-placeholder {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 60px 20px;
+  text-align: center;
+
+  h2 {
+    font-size: 18px;
+    font-weight: bold;
+    color: v.$gray-700;
+    margin-bottom: 8px;
+  }
+
+  p {
+    font-size: 13px;
+    color: v.$gray-500;
+  }
+}
+
+.wizard-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: v.$wizard-header-bg;
+  border-top: 1px solid v.$gray-300;
+  flex-shrink: 0;
+}
+
+.footer-info {
+  font-size: 13px;
+  color: v.$gray-600;
+}
+
+.btn-secondary {
+  @include w.btn-secondary;
+  padding: 8px 16px;
+}
+
+.btn-primary {
+  @include w.btn-primary;
+  padding: 8px 16px;
+}
+
+@media (max-width: 768px) {
+  .header-content {
+    h1 {
+      font-size: 14px;
+    }
+  }
+
+  .wizard-content {
+    padding: 12px 0;
+  }
+
+  .wizard-footer {
+    padding: 10px;
+  }
+
+  .footer-info {
+    display: none;
+  }
+}
