@@ -39,4 +39,40 @@ export const DEFAULT_DATASETCOLLECTION: DatasetCollection = [
       },
     ],
   },
+  {
+    dataset: 'opennutrition',
+    source: 'local',
+    items: [
+      {
+        algorithms: {
+          position: {
+            pca: 'opennutrition.26052026.position.pca.json',
+            tsne: 'opennutrition.26052026.position.tsne.json',
+          },
+          feature: 'opennutrition.26052026.feature.json',
+          schema: 'opennutrition.26052026.schema.json',
+          meta: 'opennutrition.26052026.meta.json',
+        },
+        time: '26052026',
+      },
+    ],
+  },
+  {
+    dataset: 'opennutrition_5attr',
+    source: 'local',
+    items: [
+      {
+        algorithms: {
+          position: {
+            tsne: 'opennutrition_5attr.26052026.position.tsne.json',
+            pca: 'opennutrition_5attr.26052026.position.pca.json',
+          },
+          feature: 'opennutrition_5attr.26052026.feature.json',
+          schema: 'opennutrition_5attr.26052026.schema.json',
+          meta: 'opennutrition_5attr.26052026.meta.json',
+        },
+        time: '26052026',
+      },
+    ],
+  },
 ];

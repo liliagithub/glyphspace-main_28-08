@@ -341,6 +341,7 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
       this.magicLensComponent.toggle(this.lastMousePosition, false);
       this.magicLensComponent.clearLensGlyphs();
       this.canvasContainer?.nativeElement.classList.remove('lensing');
+      this.filterService.clearFilters();
     }
   }
 
