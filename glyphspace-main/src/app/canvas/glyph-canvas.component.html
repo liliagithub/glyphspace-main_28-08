@@ -29,7 +29,7 @@
   >
     <app-magiclens [container]="canvasContainer" [glyphGroup]="rendererSvc.glyphGroup" [parentId]="id"></app-magiclens>
     <app-navigationcontrols
-    [visible]="mouseInside"
+    [visible]="mouseInside && !taskLogger.isRunning"
       [selectionMode]="selectionSvc.selectionMode"
       [magicLenseStatus]="magicLenseStatus"
       (toggleNavigation)="toggleNavigationMode()"
@@ -39,7 +39,7 @@
     </app-navigationcontrols>
   </div>
 </div>
-<app-tooltip [container]="canvasContainer"></app-tooltip>
+<app-tooltip [container]="canvasContainer" style="display:none"></app-tooltip>
 <div
   class="selection-rectangle"
   [style.left.px]="selectionSvc.selectionBox.left"

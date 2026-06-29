@@ -137,12 +137,6 @@
       </div>
     </div>
 
-    <div class="legend-bar" *ngIf="colorFeatureLabel">
-      <span class="legend-label">Farbe:</span>
-      <span class="legend-name">{{ colorFeatureLabel }}</span>
-      <span class="legend-swatch" [style.background]="colorGradientStyle"></span>
-    </div>
-
     <div class="glyph-legend" *ngIf="config.activeFeatures.length > 0">
       <div class="legend-label">Glyph</div>
       <canvas #legendCanvas class="legend-canvas"></canvas>

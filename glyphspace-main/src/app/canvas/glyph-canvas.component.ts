@@ -123,7 +123,7 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
     public cameraSvc: CanvasCameraService,
     public rendererSvc: CanvasRendererService,
     public selectionSvc: CanvasSelectionService,
-    private taskLogger: TaskLoggerService
+    public taskLogger: TaskLoggerService
   ) {}
 
   private buildRenderConfig(): GlyphRenderConfig {
@@ -333,17 +333,18 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
 
     if (!this.magicLensComponent) return;
 
-    if (this.isLensForced) {
-      if (!this.magicLensComponent.isActive()) {
-        this.magicLensComponent.toggle(this.lastMousePosition, true);
-      }
-      this.fitToView();
-      this.canvasContainer?.nativeElement.classList.add('lensing');
-    } else if (this.magicLensComponent.isActive()) {
+    this.filterService.clearFilters();
+
+    if (this.magicLensComponent.isActive()) {
       this.magicLensComponent.toggle(this.lastMousePosition, false);
+      this.magicLensComponent.toggleFix(false);
       this.magicLensComponent.clearLensGlyphs();
       this.canvasContainer?.nativeElement.classList.remove('lensing');
-      this.filterService.clearFilters();
+    }
+
+    if (this.isLensForced) {
+      this.magicLensComponent.toggle(this.lastMousePosition, true);
+      this.canvasContainer?.nativeElement.classList.add('lensing');
     }
   }
 
@@ -463,6 +464,14 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
         this.canvasContainer.nativeElement.classList.add('lensing');
       }
       this.rendererSvc.scene.background = this.rendererSvc.standardBackgroundColor;
+      this.rendererSvc.renderGlyphs(
+        this.glyphData,
+        this.id,
+        this.selectedTimestamp,
+        this.selectedAlgorithm,
+        this.aggregated,
+        this.buildRenderConfig()
+      );
     }
   }
 
