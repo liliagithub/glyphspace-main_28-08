@@ -29,7 +29,12 @@ export class AppComponent implements OnInit {
   rows = 1;
   cols = 1;
   maximizedId: number | null = null;
+  taskbarOpen = false;
   readonly minCellSize = 150; // px — change as needed
+
+  onPanelToggle(open: boolean): void {
+    this.taskbarOpen = open;
+  }
 
   constructor(
     private config: ConfigService,

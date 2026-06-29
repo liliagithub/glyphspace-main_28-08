@@ -1,4 +1,4 @@
-import { Component, NgZone, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, NgZone, ElementRef, ViewChild, AfterViewInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskLoggerService, TaskType, TaskMode } from '../services/task-logger.service';
@@ -21,6 +21,7 @@ export class TaskbarComponent implements AfterViewInit, OnDestroy {
   TaskType = TaskType;
   GlyphType = GlyphType;
   panelOpen = false;
+  @Output() panelToggle = new EventEmitter<boolean>();
   participantId = '';
   selectedMode: TaskMode = 'semantic-zoom';
   pendingModeIntro: TaskMode | null = null;
@@ -154,6 +155,7 @@ export class TaskbarComponent implements AfterViewInit, OnDestroy {
 
   togglePanel(): void {
     this.panelOpen = !this.panelOpen;
+    this.panelToggle.emit(this.panelOpen);
     if (this.panelOpen && this.logger.isRunning) {
       this.startTick();
     } else if (!this.panelOpen) {

@@ -34,8 +34,6 @@ export class RadarChartRenderer implements GlyphRenderer {
     const fillMat = new THREE.MeshBasicMaterial({
       color: color,
       side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.6,
     });
     group.add(new THREE.Mesh(new THREE.ShapeGeometry(shape), fillMat));
 
@@ -52,8 +50,6 @@ export class RadarChartRenderer implements GlyphRenderer {
       const lineMat = new LineMaterial({
         color: color,
         linewidth: sizeInfo.contourThickness,
-        transparent: true,
-        opacity: 0.9,
       });
 
       const line = new Line2(lineGeom, lineMat);

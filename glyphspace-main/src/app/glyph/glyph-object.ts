@@ -6,7 +6,6 @@ import { Features, StringStringMap } from '../shared/interfaces/glyph-feature';
 import { GlyphCacheObject } from './glyph-cache-object';
 import { GlyphType } from '../shared/enum/glyph-type';
 import { GlyphSizeInfo } from './glyph-size-info';
-import { normalizeFeatureValue } from '../shared/helpers/color-helper';
 import { GlyphRenderContext, getGlyphRenderer } from './renderers/glyph-renderer';
 import { ThumbnailRenderer } from './renderers/thumbnail.renderer';
 import { getCachedCircleGeometry, getCachedRingGeometry, getCachedBasicMaterial } from './renderers/shared-rendering';
@@ -29,6 +28,41 @@ export class GlyphObject {
   lensCenter: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
   highlightColor = 0x9b274d;
   passivecolor = 0xe0e0e0;
+  private randomColor: number = 0x00cc88;
+  private randomColorInitialized = false;
+
+  private initRandomColor(): void {
+    if (!this.randomColorInitialized) {
+      const hue = Math.random();
+      const saturation = 1;
+      const lightness = 0.5;
+      const rgb = this.hslToRgb(hue, saturation, lightness);
+      this.randomColor = (rgb[0] << 16) | (rgb[1] << 8) | rgb[2];
+      this.randomColorInitialized = true;
+    }
+  }
+
+  private hslToRgb(h: number, s: number, l: number): [number, number, number] {
+    let r, g, b;
+    if (s === 0) {
+      r = g = b = l;
+    } else {
+      const hue2rgb = (p: number, q: number, t: number) => {
+        if (t < 0) t += 1;
+        if (t > 1) t -= 1;
+        if (t < 1 / 6) return p + (q - p) * 6 * t;
+        if (t < 1 / 2) return q;
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+        return p;
+      };
+      const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+      const p = 2 * l - q;
+      r = hue2rgb(p, q, h + 1 / 3);
+      g = hue2rgb(p, q, h);
+      b = hue2rgb(p, q, h - 1 / 3);
+    }
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+  }
 
   constructor(id: string) {
     this.id = id;
@@ -71,22 +105,8 @@ export class GlyphObject {
       return this.passivecolor;
     }
 
-    let currentColor: string | number = 0x00cc88;
-    if (this.features != null) {
-      const featureValue = normalizeFeatureValue(
-        this.features['1'][renderConfig.colorFeature],
-        renderConfig.colorFeature,
-        renderConfig.featureTypes,
-        renderConfig.featureMaxValues
-      );
-
-      const scale = renderConfig.colorScale;
-      if (scale) {
-        currentColor = scale(featureValue);
-      }
-    }
-
-    return currentColor;
+    this.initRandomColor();
+    return this.randomColor;
   }
 
   public render(

@@ -1,34 +1,4 @@
 <div class="settings-panel" [class.active]="panelActive">
-  <div class="header-info">
-    <span
-      class="info-item clickable"
-      tabindex="0"
-      role="button"
-      [class.active]="activeSetting === 'position'"
-      (click)="toggleSetting('position')"
-      (keydown.enter)="toggleSetting('position')"
-      (keydown.space)="toggleSetting('position')"
-    >
-      <span class="info-label">Pos:</span>
-      <span class="info-value">{{ selectedAlgorithm }}</span>
-    </span>
-
-    @if (selectedTimestamp) {
-      <span class="info-item">
-        <span class="info-label">Time:</span>
-        <span class="info-value">{{ selectedTimestamp }}</span>
-      </span>
-    }
-
-    @if (colorFeatureLabel) {
-      <span class="info-item">
-        <span class="info-label">Color:</span>
-        <span class="info-value">{{ colorFeatureLabel }}</span>
-        <span class="color-swatch" [style.background]="colorGradientStyle"></span>
-      </span>
-    }
-  </div>
-
   <div class="settings-actions">
     <button class="action-btn" (click)="fitToView.emit()" title="Fit to screen">
       <span class="material-icons">crop_free</span>

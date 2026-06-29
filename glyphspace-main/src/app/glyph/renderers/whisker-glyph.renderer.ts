@@ -32,8 +32,6 @@ export class WhiskerGlyphRenderer implements GlyphRenderer {
       const geom = new THREE.PlaneGeometry(barWidth, barHeight);
       const mat = new THREE.MeshBasicMaterial({
         color,
-        transparent: true,
-        opacity: 0.8,
         side: THREE.DoubleSide,
         depthWrite: false,
       });

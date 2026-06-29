@@ -102,8 +102,8 @@
         >
         <div id="sidebar-glyph-axes" class="feature-list">
           @for (featureId of getSortedFeatureIds(); track featureId) {
-            <label class="feature-checkbox" [class.active]="isFeatureActive(featureId)">
-              <input type="checkbox" [checked]="isFeatureActive(featureId)" (change)="toggleFeature(featureId)" />
+            <label class="feature-checkbox active">
+              <input type="checkbox" checked disabled />
               <span class="feature-label">{{ getFeatureName(featureId) }}</span>
             </label>
           }
@@ -213,57 +213,6 @@
 
     <!-- FILTERS PANE -->
     <div class="pane-content" [hidden]="activePane !== 'filters'">
-      <!-- Search -->
-      <div class="dashboard-search">
-        <input
-          #searchInput
-          type="text"
-          [(ngModel)]="searchTerm"
-          (keydown.enter)="onSearchEnter()"
-          (focus)="onFocus()"
-          (blur)="onBlur()"
-          placeholder="Text search in features..."
-        />
-        @if (searchTerms.length > 0 || searchTerm) {
-          <button class="clear-btn" (click)="clearSearch(searchInput)">
-            <i class="material-icons">close</i>
-          </button>
-        }
-        @if (inputFocused && searchTerms.length > 0) {
-          <ul class="search-term-list">
-            @for (term of searchTerms; track $index) {
-              <li>
-                <span>{{ term }}</span>
-                <button class="remove-btn" (click)="removeTerm($index)">
-                  <i class="material-icons">close</i>
-                </button>
-              </li>
-            }
-          </ul>
-        }
-      </div>
-
-      <!-- Histogram filters -->
-      <div class="filter-container">
-        @for (featureId of featureIds; track featureId) {
-          <div class="filter-item-wrapper">
-            <app-histogram
-              [configuration]="config"
-              [dataProvider]="filterService"
-              [histogramData]="features[featureId].histogram"
-              [categories]="features[featureId].categories"
-              [featureMin]="features[featureId].min"
-              [featureMax]="features[featureId].max"
-              [originalMin]="features[featureId].originalMin"
-              [originalMax]="features[featureId].originalMax"
-              [label]="getFeatureName(featureId)"
-              [type]="getFeatureType(featureId)"
-              [property]="featureId"
-            >
-            </app-histogram>
-          </div>
-        }
-      </div>
     </div>
   </div>
 </div>

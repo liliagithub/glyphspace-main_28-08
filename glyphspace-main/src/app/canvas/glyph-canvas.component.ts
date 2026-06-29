@@ -82,7 +82,7 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
 
   // D3 force simulation and aggregation
   private simulation: Simulation<GlyphCacheObject, undefined> | undefined;
-  collisionAvoidance = false;
+  collisionAvoidance = true;
   private currentTicks = 0;
   private maxTicks = 50;
   aggregated = false;
@@ -189,6 +189,8 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
           this.selectedTimestamp = this.timestamps[0];
           this.selectedAlgorithm = this.algorithms[0];
           this.selectedContext = this.contexts[0];
+          this.taskLogger.currentTimestamp = this.selectedTimestamp;
+          this.taskLogger.currentAlgorithm = this.selectedAlgorithm;
 
           this.rendererSvc.glyphGroup.clear();
 
@@ -407,17 +409,8 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
     )
       return;
 
-    this.collisionAvoidance = !this.collisionAvoidance && doToggle;
-
     if (!this.collisionAvoidance) {
-      this.glyphData.forEach(glyph => {
-        const cached = glyph.getCacheObject(this.id, this.selectedTimestamp, this.selectedAlgorithm);
-        cached.x = cached.position.x;
-        cached.y = cached.position.y;
-      });
-      this.animationSpeed = 0.1;
-      this.rendererSvc.requestRender(RenderTask.OriginalSimulation);
-    } else {
+      this.collisionAvoidance = true;
       this.rendererSvc.requestRender(RenderTask.ForceSimulation);
     }
   }
@@ -483,7 +476,6 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
   }
 
   fitToView() {
-    if (this.collisionAvoidance) this.toggleCollisionAvoidance();
 
     this.rendererSvc.scaleGroupToFit(
       this.glyphData,
@@ -530,6 +522,8 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
     this.selectedTimestamp = payload.timestamp;
     this.selectedAlgorithm = payload.algorithm;
     this.selectedContext = payload.context;
+    this.taskLogger.currentTimestamp = this.selectedTimestamp;
+    this.taskLogger.currentAlgorithm = this.selectedAlgorithm;
 
     this.rendererSvc.positionBounds = undefined;
     this.rendererSvc.updatePositionBounds(this.glyphData, this.selectedTimestamp, this.selectedAlgorithm);

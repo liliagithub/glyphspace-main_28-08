@@ -34,8 +34,6 @@ export class FlowerGlyphRenderer implements GlyphRenderer {
       const geom = new THREE.ShapeGeometry(path);
       const mat = new THREE.MeshBasicMaterial({
         color,
-        transparent: true,
-        opacity: 0.6,
         side: THREE.DoubleSide,
       });
       const mesh = new THREE.Mesh(geom, mat);
@@ -59,8 +57,6 @@ export class FlowerGlyphRenderer implements GlyphRenderer {
         const lineMat = new LineMaterial({
           color,
           linewidth: sizeInfo.contourThickness,
-          transparent: true,
-          opacity: 0.9,
         });
 
         const contourLine = new Line2(lineGeom, lineMat);

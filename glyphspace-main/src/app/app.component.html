@@ -1,6 +1,6 @@
 <app-menubar [totalCells]="grid.length" (addCanvas)="addCanvas()"> </app-menubar>
 
-<div class="content-area">
+<div class="content-area" [class.taskbar-open]="taskbarOpen">
   <div
     #canvasGrid
     class="grid"
@@ -20,12 +20,10 @@
       </glyph-canvas>
     }
   </div>
-
-  <app-sidebar></app-sidebar>
 </div>
 
 <!-- Global toast notifications -->
 <app-toast></app-toast>
 
 <!-- Study Taskbar -->
-<app-taskbar></app-taskbar>
+<app-taskbar (panelToggle)="onPanelToggle($event)"></app-taskbar>

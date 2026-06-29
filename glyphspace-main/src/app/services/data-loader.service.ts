@@ -75,7 +75,7 @@ export class DataLoaderService {
 
             const items = this.cacheSvc.buildDataSet(datasetId, time, schema, meta, feature, positions);
 
-            if (!this.filterService.totalItems) {
+            if (datasetId === 'opennutrition_5attr' || !this.filterService.totalItems) {
               this.filterService.totalItems = items;
               this.filterService.filteredItems = items;
               this.schemaSyncSvc.applySchemaToConfig(schema);
