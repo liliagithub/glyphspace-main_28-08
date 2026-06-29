@@ -91,8 +91,8 @@ const TASK_DEFINITIONS_MAGIC_LENS: TaskDefinition[] = [
   { id: 'cmp-2-l', type: TaskType.Comparison, name: 'Gruppe: Hoher Ballaststoff, geringste Kalorien', description: 'Suchen Sie nach der Gruppe von Produkten mit sehr hohem Ballaststoffgehalt und klicken Sie auf diejenige Glyphe aus dieser Gruppe, die den geringsten Kalorienwert aufweist.', mode: 'magic-lens' },
   { id: 'cmp-3-l', type: TaskType.Comparison, name: 'Gruppe: Hohes Fett, höchster Zucker', description: 'Suchen Sie nach der Gruppe von Produkten mit hohem Gesamtfettgehalt und klicken Sie auf diejenige Glyphe in diesem Bereich, die den optisch höchsten Zuckeranteil aufweist.', mode: 'magic-lens' },
   { id: 'cmp-4-l', type: TaskType.Comparison, name: 'Gruppe: Hoher Protein, höchster Ballaststoff', description: 'Suchen Sie nach der Gruppe von Produkten mit hohem Gesamtproteingehalt und klicken Sie auf diejenige Glyphe in diesem Bereich, die den optisch höchsten Ballaststoffanteil aufweist.', mode: 'magic-lens' },
-  { id: 'pr-1-l', type: TaskType.PatternRecognition, name: 'Verhältnis: Kalorien vs. Fett', description: 'Finden Sie das Produkt, bei dem das Verhältnis von Kalorien zu Gesamtfett am stärksten auseinandergeht (maximal viele Kalorien bei minimalem Fett), und klicken Sie es an.', mode: 'magic-lens' },
-  { id: 'pr-2-l', type: TaskType.PatternRecognition, name: 'Verhältnis: Protein vs. Ballaststoffe', description: 'Finden Sie das Produkt, bei dem das Verhältnis von Proteingehalt zu Ballaststoffen am stärksten auseinandergeht (maximal viel Protein bei minimalen Ballaststoffen), und klicken Sie es an.', mode: 'magic-lens' },
+  { id: 'pr-1-l', type: TaskType.PatternRecognition, name: 'Verhältnis: Kalorien vs. Fett', description: 'Finden Sie ein Produkt, bei dem das Verhältnis von Kalorien zu Gesamtfett am stärksten auseinandergeht (maximal viele Kalorien bei minimalem Fett), und klicken Sie es an.', mode: 'magic-lens' },
+  { id: 'pr-2-l', type: TaskType.PatternRecognition, name: 'Verhältnis: Protein vs. Ballaststoffe', description: 'Finden Sie ein Produkt, bei dem das Verhältnis von Proteingehalt zu Ballaststoffen am stärksten auseinandergeht (maximal viel Protein bei minimalen Ballaststoffen), und klicken Sie es an.', mode: 'magic-lens' },
   { id: 'pr-3-l', type: TaskType.PatternRecognition, name: 'Magerer Fitness-Snack', description: 'Finden Sie ein Produkt, dessen Glyphe das Profil eines \'Mageren Fitness-Snacks\' zeigt: sehr viel Protein, während Fett und Zucker nahezu Null sind.', mode: 'magic-lens' },
   { id: 'pr-4-l', type: TaskType.PatternRecognition, name: 'Zucker+Ballaststoffe max, Fett null', description: 'Finden Sie ein Produkt, bei dem Zucker und Ballaststoffe maximal ausgeprägt sind, während Fett nahezu Null ist.', mode: 'magic-lens' },
   { id: 'pr-5-l', type: TaskType.PatternRecognition, name: 'Kalorien+Protein max, Rest null', description: 'Finden Sie eine Glyphe, bei der die beiden Attribute Kalorien und Protein maximal ausgeprägt sind, während Fett, Zucker und Ballaststoffe gegen Null gehen.', mode: 'magic-lens' },
@@ -508,6 +508,7 @@ export class TaskLoggerService {
         const deviation = this.computeDeviation(r);
         const expectedPositionDistance = this.computeExpectedPositionDistance(r);
         return {
+          participantId: session.participantId || null,
           taskId: r.taskId,
           taskType: r.taskType,
           taskName: r.taskName,
@@ -533,13 +534,14 @@ export class TaskLoggerService {
     const completed = session.runs.filter(r => r.completed);
     const totalDuration = (session.endTime ?? session.startTime) - session.startTime;
     const infoLine = `sessionId,${session.id},totalDurationMs,${totalDuration},participantId,${session.participantId || ''}`;
-    const header = 'taskId,taskType,taskName,mode,sequenceNumber,durationMs,accuracy,deviation,expectedPositionDistance,solutionGlyphId,expectedGlyphId,panDistance,zoomDistance,lensDistance,eventCount';
+    const header = 'participantId,taskId,taskType,taskName,mode,sequenceNumber,durationMs,accuracy,deviation,expectedPositionDistance,solutionGlyphId,expectedGlyphId,panDistance,zoomDistance,lensDistance,eventCount';
     const rows = completed.map((r, idx) => {
       const expectedId = this.getExpectedGlyphId(r.taskId);
       const accuracy = this.computeAccuracy(r);
       const deviation = this.computeDeviation(r);
       const expectedPositionDistance = this.computeExpectedPositionDistance(r);
       return [
+        session.participantId || '',
         r.taskId,
         r.taskType,
         '"' + r.taskName + '"',

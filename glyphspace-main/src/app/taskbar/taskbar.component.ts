@@ -93,6 +93,11 @@ export class TaskbarComponent implements AfterViewInit, OnDestroy {
   }
 
   getElapsedMs(): number {
+    if (this.isStudyComplete()) {
+      const session = this.logger.session;
+      if (session.endTime && session.startTime) return session.endTime - session.startTime;
+      return 0;
+    }
     const run = this.logger.currentRun;
     if (!run || run.startTime === 0) return 0;
     if (run.completed && run.duration) return run.duration;
