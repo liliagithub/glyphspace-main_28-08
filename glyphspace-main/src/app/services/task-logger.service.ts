@@ -59,6 +59,13 @@ export interface TaskSession {
   runs: TaskRun[];
 }
 
+export interface TaskExpectedInfo {
+  glyphId: string;
+  optimalScore: number;
+  minScore: number;
+  maxScore: number;
+}
+
 const TASK_DEFINITIONS_SEMANTIC_ZOOM: TaskDefinition[] = [
   { id: 'id-1-z', type: TaskType.Identification, name: 'Höchsten Gesamtzuckergehalt finden', description: 'Finden Sie ein Produkt mit dem absolut höchsten Gesamtzuckergehalt im gesamten Datensatz und klicken Sie auf seine Glyphe.', mode: 'semantic-zoom' },
   { id: 'id-2-z', type: TaskType.Identification, name: 'Höchsten Gesamtproteingehalt finden', description: 'Finden Sie ein Produkt mit dem absolut höchsten Gesamtproteingehalt im gesamten Datensatz und klicken Sie auf seine Glyphe.', mode: 'semantic-zoom' },
@@ -343,6 +350,7 @@ export class TaskLoggerService {
     this.lastZoomLevel = 1;
     this.lastMousePos = { x: 0, y: 0 };
     this.lensWasActive = false;
+    this.expectedAnswerInfoMap = null;
     this.sessionSubject.next(this.createSession());
   }
 
@@ -359,30 +367,56 @@ export class TaskLoggerService {
   }
 
   private computeAccuracy(run: TaskRun): boolean | null {
-    const expectedId = this.getExpectedGlyphId(run.taskId);
-    if (!expectedId || !run.solutionGlyphId) return null;
-    return run.solutionGlyphId === expectedId;
+    const info = this.getExpectedInfo(run.taskId);
+    if (!info || !run.solutionGlyphId) return null;
+    return run.solutionGlyphId === info.glyphId;
   }
 
   private computeDeviation(run: TaskRun): number | null {
-    const expectedId = this.getExpectedGlyphId(run.taskId);
-    if (!expectedId || !run.solutionGlyphId) return null;
-    const expectedPos = this.getGlyphPosition(expectedId, run.timestamp, run.algorithm);
-    const solutionPos = this.getGlyphPosition(run.solutionGlyphId, run.timestamp, run.algorithm);
-    if (!expectedPos || !solutionPos) return null;
-    return Math.hypot(solutionPos.x - expectedPos.x, solutionPos.y - expectedPos.y);
+    if (!run.solutionGlyphId) return null;
+    const info = this.getExpectedInfo(run.taskId);
+    if (!info) return null;
+    const userScore = this.computeScoreForTask(run.taskId, run.solutionGlyphId);
+    if (userScore === null) return null;
+    const range = info.maxScore - info.minScore;
+    if (range === 0) return 0;
+    return Math.abs(info.optimalScore - userScore) / range;
   }
 
   private computeExpectedPositionDistance(run: TaskRun): number | null {
-    const expectedId = this.getExpectedGlyphId(run.taskId);
-    if (!expectedId || !run.solutionGlyphId) return null;
-    const expectedPos = this.getGlyphPosition(expectedId, run.timestamp, run.algorithm);
+    if (!run.solutionGlyphId) return null;
+    const info = this.getExpectedInfo(run.taskId);
+    if (!info) return null;
+    const expectedPos = this.getGlyphPosition(info.glyphId, run.timestamp, run.algorithm);
     const solutionPos = this.getGlyphPosition(run.solutionGlyphId, run.timestamp, run.algorithm);
     if (!expectedPos || !solutionPos) return null;
-    return Math.hypot(solutionPos.x - expectedPos.x, solutionPos.y - expectedPos.y);
+    const distance = Math.hypot(solutionPos.x - expectedPos.x, solutionPos.y - expectedPos.y);
+    const maxDistance = this.getMaxPositionDistance(run.timestamp, run.algorithm);
+    if (maxDistance === 0) return 0;
+    return Math.min(100, (distance / maxDistance) * 100);
   }
 
-  private expectedAnswerMap: Map<string, string> | null = null;
+  private getMaxPositionDistance(timestamp: string, algorithm: string): number {
+    const glyphMap = this.dataLoader.getGlyphDataSync();
+    if (!glyphMap || glyphMap.size === 0) return 0;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    glyphMap.forEach((glyph) => {
+      try {
+        const pos = glyph.getPosition(timestamp, algorithm);
+        if (pos) {
+          if (pos.x < minX) minX = pos.x;
+          if (pos.x > maxX) maxX = pos.x;
+          if (pos.y < minY) minY = pos.y;
+          if (pos.y > maxY) maxY = pos.y;
+        }
+      } catch {
+      }
+    });
+    if (minX === Infinity || maxX === -Infinity) return 0;
+    return Math.hypot(maxX - minX, maxY - minY);
+  }
+
+  private expectedAnswerInfoMap: Map<string, TaskExpectedInfo> | null = null;
   private readonly FID = { PROTEIN: '63', CALORIES: '11', SUGAR: '77', FAT: '76', FIBER: '22' };
 
   private getFeatureVal(id: string, feature: string): number {
@@ -390,22 +424,62 @@ export class TaskLoggerService {
     return glyphMap?.get(id)?.features?.['1']?.[feature] ?? 0;
   }
 
-  private computeExpectedAnswers(): Map<string, string> {
-    const map = new Map<string, string>();
+  private computeScoreForTask(taskId: string, glyphId: string): number | null {
+    const F = this.FID;
+    const val = (id: string, f: string) => this.getFeatureVal(id, f);
+    const fns: Record<string, (id: string) => number> = {
+      'id-1-z': id => val(id, F.SUGAR),
+      'id-2-z': id => val(id, F.PROTEIN),
+      'id-3-z': id => val(id, F.FAT),
+      'id-4-z': id => val(id, F.CALORIES),
+      'cmp-1-z': id => val(id, F.PROTEIN) + val(id, F.SUGAR),
+      'cmp-2-z': id => val(id, F.FAT) + val(id, F.FIBER),
+      'cmp-3-z': id => val(id, F.SUGAR) + val(id, F.FAT) - val(id, F.FIBER),
+      'cmp-4-z': id => val(id, F.CALORIES) + val(id, F.FAT) - val(id, F.PROTEIN),
+      'pr-1-z': id => val(id, F.PROTEIN) + val(id, F.FIBER) - val(id, F.SUGAR),
+      'pr-2-z': id => val(id, F.SUGAR) + val(id, F.CALORIES) - val(id, F.FAT),
+      'pr-3-z': id => val(id, F.FAT) - val(id, F.SUGAR) - val(id, F.FIBER),
+      'pr-4-z': id => val(id, F.FIBER) - val(id, F.FAT) - val(id, F.PROTEIN),
+      'pr-5-z': id => val(id, F.FAT) + val(id, F.FIBER) - val(id, F.PROTEIN) - val(id, F.SUGAR) - val(id, F.CALORIES),
+      'pr-6-z': id => val(id, F.CALORIES) + val(id, F.FAT) - val(id, F.PROTEIN) - val(id, F.SUGAR) - val(id, F.FIBER),
+      'pr-7-z': id => val(id, F.PROTEIN) + val(id, F.FIBER) - val(id, F.FAT) - val(id, F.SUGAR) - val(id, F.CALORIES),
+      'pr-8-z': id => val(id, F.CALORIES) + val(id, F.SUGAR) - val(id, F.FAT) - val(id, F.PROTEIN) - val(id, F.FIBER),
+      'ma-1-z': id => val(id, F.FIBER),
+      'ma-2-z': id => val(id, F.PROTEIN),
+      'ma-3-z': id => val(id, F.CALORIES) + val(id, F.FAT) - val(id, F.SUGAR),
+      'ma-4-z': id => val(id, F.SUGAR),
+      'id-1-l': id => val(id, F.PROTEIN),
+      'id-2-l': id => val(id, F.FIBER),
+      'id-3-l': id => -val(id, F.CALORIES),
+      'id-4-l': id => -val(id, F.FAT),
+      'cmp-1-l': id => val(id, F.CALORIES),
+      'cmp-2-l': id => val(id, F.CALORIES),
+      'cmp-3-l': id => val(id, F.SUGAR),
+      'cmp-4-l': id => val(id, F.FIBER),
+      'pr-1-l': id => val(id, F.CALORIES) / (val(id, F.FAT) + 1),
+      'pr-2-l': id => val(id, F.PROTEIN) / (val(id, F.FIBER) + 1),
+      'pr-3-l': id => val(id, F.PROTEIN) - val(id, F.FAT) - val(id, F.SUGAR),
+      'pr-4-l': id => val(id, F.SUGAR) + val(id, F.FIBER) - val(id, F.FAT),
+      'pr-5-l': id => val(id, F.CALORIES) + val(id, F.PROTEIN) - val(id, F.FAT) - val(id, F.SUGAR) - val(id, F.FIBER),
+      'pr-6-l': id => val(id, F.SUGAR) + val(id, F.FIBER) - val(id, F.FAT) - val(id, F.PROTEIN) - val(id, F.CALORIES),
+      'pr-7-l': id => val(id, F.PROTEIN) + val(id, F.SUGAR) - val(id, F.FAT) - val(id, F.FIBER) - val(id, F.CALORIES),
+      'pr-8-l': id => val(id, F.SUGAR) + val(id, F.FAT) - val(id, F.PROTEIN) - val(id, F.FIBER) - val(id, F.CALORIES),
+      'ma-1-l': id => val(id, F.CALORIES),
+      'ma-2-l': id => val(id, F.FAT),
+      'ma-3-l': id => val(id, F.FAT) - val(id, F.SUGAR),
+      'ma-4-l': id => val(id, F.CALORIES),
+    };
+    const fn = fns[taskId];
+    return fn ? fn(glyphId) : null;
+  }
+
+  private computeExpectedAnswerInfo(): Map<string, TaskExpectedInfo> {
+    const infoMap = new Map<string, TaskExpectedInfo>();
     const glyphMap = this.dataLoader.getGlyphDataSync();
-    if (!glyphMap) return map;
+    if (!glyphMap) return infoMap;
 
     const F = this.FID;
     const val = (id: string, f: string) => this.getFeatureVal(id, f);
-
-    const bestByScore = (fn: (id: string) => number): string => {
-      let bestId = '', bestScore = -Infinity;
-      glyphMap.forEach((_, id) => {
-        const s = fn(id);
-        if (s > bestScore) { bestScore = s; bestId = id; }
-      });
-      return bestId;
-    };
 
     const topPercentile = (feature: string, pct: number): string[] => {
       const entries: { id: string; v: number }[] = [];
@@ -415,72 +489,93 @@ export class TaskLoggerService {
       return entries.slice(0, count).map(e => e.id);
     };
 
-    const bestInSubset = (ids: string[], feature: string, max: boolean): string => {
-      let bestId = ids[0], bestVal = val(ids[0], feature);
-      for (let i = 1; i < ids.length; i++) {
-        const v = val(ids[i], feature);
-        if (max ? v > bestVal : v < bestVal) { bestVal = v; bestId = ids[i]; }
-      }
-      return bestId;
+    const top5Protein = topPercentile(F.PROTEIN, 5);
+    const top5Fiber = topPercentile(F.FIBER, 5);
+    const top5Sugar = topPercentile(F.SUGAR, 5);
+    const top5Fat = topPercentile(F.FAT, 5);
+
+    interface TaskConfig {
+      fn: (id: string) => number;
+      subset?: string[];
+      isMaximization: boolean;
+    }
+
+    const taskConfigs: Record<string, TaskConfig> = {
+      'id-1-z': { fn: id => val(id, F.SUGAR), isMaximization: true },
+      'id-2-z': { fn: id => val(id, F.PROTEIN), isMaximization: true },
+      'id-3-z': { fn: id => val(id, F.FAT), isMaximization: true },
+      'id-4-z': { fn: id => val(id, F.CALORIES), isMaximization: true },
+      'cmp-1-z': { fn: id => val(id, F.PROTEIN) + val(id, F.SUGAR), isMaximization: true },
+      'cmp-2-z': { fn: id => val(id, F.FAT) + val(id, F.FIBER), isMaximization: true },
+      'cmp-3-z': { fn: id => val(id, F.SUGAR) + val(id, F.FAT) - val(id, F.FIBER), isMaximization: true },
+      'cmp-4-z': { fn: id => val(id, F.CALORIES) + val(id, F.FAT) - val(id, F.PROTEIN), isMaximization: true },
+      'pr-1-z': { fn: id => val(id, F.PROTEIN) + val(id, F.FIBER) - val(id, F.SUGAR), isMaximization: true },
+      'pr-2-z': { fn: id => val(id, F.SUGAR) + val(id, F.CALORIES) - val(id, F.FAT), isMaximization: true },
+      'pr-3-z': { fn: id => val(id, F.FAT) - val(id, F.SUGAR) - val(id, F.FIBER), isMaximization: true },
+      'pr-4-z': { fn: id => val(id, F.FIBER) - val(id, F.FAT) - val(id, F.PROTEIN), isMaximization: true },
+      'pr-5-z': { fn: id => val(id, F.FAT) + val(id, F.FIBER) - val(id, F.PROTEIN) - val(id, F.SUGAR) - val(id, F.CALORIES), isMaximization: true },
+      'pr-6-z': { fn: id => val(id, F.CALORIES) + val(id, F.FAT) - val(id, F.PROTEIN) - val(id, F.SUGAR) - val(id, F.FIBER), isMaximization: true },
+      'pr-7-z': { fn: id => val(id, F.PROTEIN) + val(id, F.FIBER) - val(id, F.FAT) - val(id, F.SUGAR) - val(id, F.CALORIES), isMaximization: true },
+      'pr-8-z': { fn: id => val(id, F.CALORIES) + val(id, F.SUGAR) - val(id, F.FAT) - val(id, F.PROTEIN) - val(id, F.FIBER), isMaximization: true },
+      'ma-1-z': { fn: id => val(id, F.FIBER), subset: top5Protein, isMaximization: false },
+      'ma-2-z': { fn: id => val(id, F.PROTEIN), subset: top5Fiber, isMaximization: true },
+      'ma-3-z': { fn: id => val(id, F.CALORIES) + val(id, F.FAT) - val(id, F.SUGAR), isMaximization: true },
+      'ma-4-z': { fn: id => val(id, F.SUGAR), subset: top5Fiber, isMaximization: true },
+      'id-1-l': { fn: id => val(id, F.PROTEIN), isMaximization: true },
+      'id-2-l': { fn: id => val(id, F.FIBER), isMaximization: true },
+      'id-3-l': { fn: id => -val(id, F.CALORIES), isMaximization: true },
+      'id-4-l': { fn: id => -val(id, F.FAT), isMaximization: true },
+      'cmp-1-l': { fn: id => val(id, F.CALORIES), subset: top5Protein, isMaximization: false },
+      'cmp-2-l': { fn: id => val(id, F.CALORIES), subset: top5Fiber, isMaximization: false },
+      'cmp-3-l': { fn: id => val(id, F.SUGAR), subset: top5Fat, isMaximization: true },
+      'cmp-4-l': { fn: id => val(id, F.FIBER), subset: top5Protein, isMaximization: true },
+      'pr-1-l': { fn: id => val(id, F.CALORIES) / (val(id, F.FAT) + 1), isMaximization: true },
+      'pr-2-l': { fn: id => val(id, F.PROTEIN) / (val(id, F.FIBER) + 1), isMaximization: true },
+      'pr-3-l': { fn: id => val(id, F.PROTEIN) - val(id, F.FAT) - val(id, F.SUGAR), isMaximization: true },
+      'pr-4-l': { fn: id => val(id, F.SUGAR) + val(id, F.FIBER) - val(id, F.FAT), isMaximization: true },
+      'pr-5-l': { fn: id => val(id, F.CALORIES) + val(id, F.PROTEIN) - val(id, F.FAT) - val(id, F.SUGAR) - val(id, F.FIBER), isMaximization: true },
+      'pr-6-l': { fn: id => val(id, F.SUGAR) + val(id, F.FIBER) - val(id, F.FAT) - val(id, F.PROTEIN) - val(id, F.CALORIES), isMaximization: true },
+      'pr-7-l': { fn: id => val(id, F.PROTEIN) + val(id, F.SUGAR) - val(id, F.FAT) - val(id, F.FIBER) - val(id, F.CALORIES), isMaximization: true },
+      'pr-8-l': { fn: id => val(id, F.SUGAR) + val(id, F.FAT) - val(id, F.PROTEIN) - val(id, F.FIBER) - val(id, F.CALORIES), isMaximization: true },
+      'ma-1-l': { fn: id => val(id, F.CALORIES), subset: top5Sugar, isMaximization: false },
+      'ma-2-l': { fn: id => val(id, F.FAT), subset: top5Protein, isMaximization: true },
+      'ma-3-l': { fn: id => val(id, F.FAT) - val(id, F.SUGAR), isMaximization: true },
+      'ma-4-l': { fn: id => val(id, F.CALORIES), subset: top5Fat, isMaximization: false },
     };
 
-    const top20Protein = topPercentile(F.PROTEIN, 20);
-    const top20Fiber = topPercentile(F.FIBER, 20);
-    const top20Sugar = topPercentile(F.SUGAR, 20);
-    const top20Fat = topPercentile(F.FAT, 20);
+    for (const [taskId, config] of Object.entries(taskConfigs)) {
+      let minScore = Infinity;
+      let maxScore = -Infinity;
 
-    // Set B - Semantic Zoom
-    map.set('id-1-z', bestByScore(id => val(id, F.SUGAR)));
-    map.set('id-2-z', bestByScore(id => val(id, F.PROTEIN)));
-    map.set('id-3-z', bestByScore(id => val(id, F.FAT)));
-    map.set('id-4-z', bestByScore(id => val(id, F.CALORIES)));
-    map.set('cmp-1-z', bestByScore(id => val(id, F.PROTEIN) + val(id, F.SUGAR)));
-    map.set('cmp-2-z', bestByScore(id => val(id, F.FAT) + val(id, F.FIBER)));
-    map.set('cmp-3-z', bestByScore(id => val(id, F.SUGAR) + val(id, F.FAT) - val(id, F.FIBER)));
-    map.set('cmp-4-z', bestByScore(id => val(id, F.CALORIES) + val(id, F.FAT) - val(id, F.PROTEIN)));
-    map.set('pr-1-z', bestByScore(id => val(id, F.PROTEIN) + val(id, F.FIBER) - val(id, F.SUGAR)));
-    map.set('pr-2-z', bestByScore(id => val(id, F.SUGAR) + val(id, F.CALORIES) - val(id, F.FAT)));
-    map.set('pr-3-z', bestByScore(id => val(id, F.FAT) - val(id, F.SUGAR) - val(id, F.FIBER)));
-    map.set('pr-4-z', bestByScore(id => val(id, F.FIBER) - val(id, F.FAT) - val(id, F.PROTEIN)));
-    map.set('pr-5-z', bestByScore(id => val(id, F.FAT) + val(id, F.FIBER) - val(id, F.PROTEIN) - val(id, F.SUGAR) - val(id, F.CALORIES)));
-    map.set('pr-6-z', bestByScore(id => val(id, F.CALORIES) + val(id, F.FAT) - val(id, F.PROTEIN) - val(id, F.SUGAR) - val(id, F.FIBER)));
-    map.set('pr-7-z', bestByScore(id => val(id, F.PROTEIN) + val(id, F.FIBER) - val(id, F.FAT) - val(id, F.SUGAR) - val(id, F.CALORIES)));
-    map.set('pr-8-z', bestByScore(id => val(id, F.CALORIES) + val(id, F.SUGAR) - val(id, F.FAT) - val(id, F.PROTEIN) - val(id, F.FIBER)));
-    map.set('ma-1-z', bestInSubset(top20Protein, F.FIBER, false));
-    map.set('ma-2-z', bestInSubset(top20Fiber, F.PROTEIN, true));
-    map.set('ma-3-z', bestByScore(id => val(id, F.CALORIES) + val(id, F.FAT) - val(id, F.SUGAR)));
-    map.set('ma-4-z', bestInSubset(top20Fiber, F.SUGAR, true));
+      glyphMap.forEach((_, id) => {
+        const s = config.fn(id);
+        if (s < minScore) minScore = s;
+        if (s > maxScore) maxScore = s;
+      });
 
-    // Set A - Magic Lens
-    map.set('id-1-l', bestByScore(id => val(id, F.PROTEIN)));
-    map.set('id-2-l', bestByScore(id => val(id, F.FIBER)));
-    map.set('id-3-l', bestByScore(id => -val(id, F.CALORIES)));
-    map.set('id-4-l', bestByScore(id => -val(id, F.FAT)));
-    map.set('cmp-1-l', bestInSubset(top20Protein, F.CALORIES, false));
-    map.set('cmp-2-l', bestInSubset(top20Fiber, F.CALORIES, false));
-    map.set('cmp-3-l', bestInSubset(top20Fat, F.SUGAR, true));
-    map.set('cmp-4-l', bestInSubset(top20Protein, F.FIBER, true));
-    map.set('pr-1-l', bestByScore(id => val(id, F.CALORIES) / (val(id, F.FAT) + 1)));
-    map.set('pr-2-l', bestByScore(id => val(id, F.PROTEIN) / (val(id, F.FIBER) + 1)));
-    map.set('pr-3-l', bestByScore(id => val(id, F.PROTEIN) - val(id, F.FAT) - val(id, F.SUGAR)));
-    map.set('pr-4-l', bestByScore(id => val(id, F.SUGAR) + val(id, F.FIBER) - val(id, F.FAT)));
-    map.set('pr-5-l', bestByScore(id => val(id, F.CALORIES) + val(id, F.PROTEIN) - val(id, F.FAT) - val(id, F.SUGAR) - val(id, F.FIBER)));
-    map.set('pr-6-l', bestByScore(id => val(id, F.SUGAR) + val(id, F.FIBER) - val(id, F.FAT) - val(id, F.PROTEIN) - val(id, F.CALORIES)));
-    map.set('pr-7-l', bestByScore(id => val(id, F.PROTEIN) + val(id, F.SUGAR) - val(id, F.FAT) - val(id, F.FIBER) - val(id, F.CALORIES)));
-    map.set('pr-8-l', bestByScore(id => val(id, F.SUGAR) + val(id, F.FAT) - val(id, F.PROTEIN) - val(id, F.FIBER) - val(id, F.CALORIES)));
-    map.set('ma-1-l', bestInSubset(top20Sugar, F.CALORIES, false));
-    map.set('ma-2-l', bestInSubset(top20Protein, F.FAT, true));
-    map.set('ma-3-l', bestByScore(id => val(id, F.FAT) - val(id, F.SUGAR)));
-    map.set('ma-4-l', bestInSubset(top20Fat, F.CALORIES, false));
+      let optimalId = '';
+      let optimalScore = config.isMaximization ? -Infinity : Infinity;
 
-    return map;
+      const candidates = config.subset || Array.from(glyphMap.keys());
+      for (const id of candidates) {
+        const s = config.fn(id);
+        if (config.isMaximization ? s > optimalScore : s < optimalScore) {
+          optimalScore = s;
+          optimalId = id;
+        }
+      }
+
+      infoMap.set(taskId, { glyphId: optimalId, optimalScore, minScore, maxScore });
+    }
+
+    return infoMap;
   }
 
-  private getExpectedGlyphId(taskId: string): string | null {
-    if (!this.expectedAnswerMap) {
-      this.expectedAnswerMap = this.computeExpectedAnswers();
+  private getExpectedInfo(taskId: string): TaskExpectedInfo | null {
+    if (!this.expectedAnswerInfoMap) {
+      this.expectedAnswerInfoMap = this.computeExpectedAnswerInfo();
     }
-    return this.expectedAnswerMap.get(taskId) ?? null;
+    return this.expectedAnswerInfoMap.get(taskId) ?? null;
   }
 
   private logEvent(type: TaskEvent['type'], data?: Record<string, unknown>): void {
@@ -503,7 +598,7 @@ export class TaskLoggerService {
         totalDurationMs: totalDuration,
       },
       runs: completed.map((r, idx) => {
-        const expectedId = this.getExpectedGlyphId(r.taskId);
+        const info = this.getExpectedInfo(r.taskId);
         const accuracy = this.computeAccuracy(r);
         const deviation = this.computeDeviation(r);
         const expectedPositionDistance = this.computeExpectedPositionDistance(r);
@@ -516,10 +611,10 @@ export class TaskLoggerService {
           sequenceNumber: idx + 1,
           durationMs: r.duration,
           accuracy: accuracy,
-          deviation: deviation,
-          expectedPositionDistance: expectedPositionDistance,
+          deviation: deviation !== null ? Math.round(deviation * 100) / 100 : null,
+          expectedPositionDistance: expectedPositionDistance !== null ? Math.round(expectedPositionDistance * 100) / 100 : null,
           solutionGlyphId: r.solutionGlyphId,
-          expectedGlyphId: expectedId,
+          expectedGlyphId: info?.glyphId ?? null,
           panDistance: Math.round(r.panDistance * 100) / 100,
           zoomDistance: Math.round(r.zoomDistance * 100) / 100,
           lensDistance: r.mode === 'magic-lens' ? Math.round(r.lensDistance * 100) / 100 : 0,
@@ -536,7 +631,7 @@ export class TaskLoggerService {
     const infoLine = `sessionId,${session.id},totalDurationMs,${totalDuration},participantId,${session.participantId || ''}`;
     const header = 'participantId,taskId,taskType,taskName,mode,sequenceNumber,durationMs,accuracy,deviation,expectedPositionDistance,solutionGlyphId,expectedGlyphId,panDistance,zoomDistance,lensDistance,eventCount';
     const rows = completed.map((r, idx) => {
-      const expectedId = this.getExpectedGlyphId(r.taskId);
+      const info = this.getExpectedInfo(r.taskId);
       const accuracy = this.computeAccuracy(r);
       const deviation = this.computeDeviation(r);
       const expectedPositionDistance = this.computeExpectedPositionDistance(r);
@@ -552,7 +647,7 @@ export class TaskLoggerService {
         deviation !== null ? String(Math.round(deviation * 100) / 100) : '',
         expectedPositionDistance !== null ? String(Math.round(expectedPositionDistance * 100) / 100) : '',
         r.solutionGlyphId || '',
-        expectedId || '',
+        info?.glyphId ?? '',
         Math.round(r.panDistance * 100) / 100,
         Math.round(r.zoomDistance * 100) / 100,
         r.mode === 'magic-lens' ? Math.round(r.lensDistance * 100) / 100 : 0,
