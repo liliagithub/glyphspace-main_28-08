@@ -857,10 +857,10 @@ export class GlyphCanvasComponent implements AfterViewInit, OnDestroy, OnChanges
   @HostListener('mousedown', ['$event'])
   onMouseDown(event: MouseEvent): void {
     this.mouseDownTime = Date.now();
+    this.lastMousePosition.set(event.clientX, event.clientY);
 
     if (this.magicLensComponent.isActive()) return;
 
-    this.lastMousePosition.set(event.clientX, event.clientY);
     this.cameraSvc.isPanning = true;
 
     if (this.selectionSvc.selectionMode) {
