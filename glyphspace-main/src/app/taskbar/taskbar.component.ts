@@ -39,7 +39,7 @@ export class TaskbarComponent implements AfterViewInit, OnDestroy {
     setTimeout(() => this.drawLegendGlyph());
   }
 
-  private drawLegendGlyph(): void {
+  drawLegendGlyph(): void {
     const canvas = this.legendCanvasRef?.nativeElement;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');

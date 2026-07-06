@@ -138,7 +138,10 @@
     </div>
 
     <div class="glyph-legend" *ngIf="config.activeFeatures.length > 0">
-      <div class="legend-label">Glyph</div>
+      <div class="legend-label">
+        <span>Glyph</span>
+        <button class="legend-reload-btn" (click)="drawLegendGlyph()" title="Legende neu laden">↻</button>
+      </div>
       <canvas #legendCanvas class="legend-canvas"></canvas>
     </div>
 
