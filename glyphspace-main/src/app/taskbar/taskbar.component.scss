@@ -541,3 +541,112 @@
     }
   }
 }
+
+.questionnaire-notice {
+  background: #fef9e7;
+  border: 2px solid #f9e79f;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  text-align: center;
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    color: #7d6608;
+  }
+
+  p {
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: #7d6608;
+  }
+}
+
+.survey-prompt {
+  background: #ebf5fb;
+  border: 2px solid #85c1e9;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  text-align: center;
+  width: 100%;
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    color: #1a5276;
+  }
+
+  p {
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: #1a5276;
+  }
+}
+
+.survey-link {
+  display: inline-block;
+  padding: 8px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 6px;
+  background: #3498db;
+  color: #fff;
+  text-decoration: none;
+  transition: opacity 0.15s;
+
+  &:hover {
+    opacity: 0.85;
+  }
+}
+
+.survey-complete {
+  background: #ebf5fb;
+  border: 2px solid #85c1e9;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  text-align: center;
+  width: 100%;
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    color: #1a5276;
+  }
+
+  p {
+    margin: 0 0 12px;
+    font-size: 13px;
+    color: #1a5276;
+  }
+}
+
+.export-section {
+  background: #d5f5e3;
+  border: 2px solid #82e0aa;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  text-align: center;
+  width: 100%;
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    color: #1e8449;
+  }
+
+  p {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: #1e8449;
+  }
+
+  .email-addr {
+    font-size: 14px;
+    color: #1e8449;
+    word-break: break-all;
+  }
+}

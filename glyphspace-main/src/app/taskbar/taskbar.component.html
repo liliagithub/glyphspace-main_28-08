@@ -11,6 +11,19 @@
   <ng-container *ngIf="!logger.studyStarted">
     <div class="welcome">
       <h2>Glyphspace Studie</h2>
+      <div class="questionnaire-notice">
+        <h3>Bevor Sie beginnen</h3>
+        <p>
+          Bitte füllen Sie zuerst diesen Fragebogen aus:
+        </p>
+        <a
+          class="survey-link"
+          href="https://docs.google.com/forms/d/e/1FAIpQLScNdtZsKXX25wtZlesiO-mgqZwDyLEY2erW6oR6vAdoW6wWgw/viewform?usp=dialog"
+          target="_blank"
+        >
+          Zum Fragebogen
+        </a>
+      </div>
       <p class="intro">
         In dieser Studie werden Ihnen {{ totalTasks }} Aufgaben aus 4 Kategorien gestellt:
         <strong>Identifikation, Vergleich, Mustererkennung</strong> und
@@ -68,6 +81,20 @@
   <!-- MODE INTRO -->
   <ng-container *ngIf="logger.studyStarted && !isStudyComplete() && pendingModeIntro">
     <div class="welcome">
+      <div *ngIf="pendingModeIntro !== selectedMode" class="survey-prompt">
+        <h3>Umfrage - Nächster Abschnitt</h3>
+        <p>
+          Bitte beantworten Sie nun den nächsten Abschnitt der Umfrage.
+        </p>
+        <a
+          class="survey-link"
+          href="https://docs.google.com/forms/d/e/1FAIpQLScNdtZsKXX25wtZlesiO-mgqZwDyLEY2erW6oR6vAdoW6wWgw/viewform?usp=dialog"
+          target="_blank"
+        >
+          Zur Umfrage
+        </a>
+      </div>
+
       <h2 *ngIf="pendingModeIntro === 'semantic-zoom'">Semantisches Zoomen</h2>
       <h2 *ngIf="pendingModeIntro === 'magic-lens'">Magic Lens</h2>
 
@@ -123,7 +150,30 @@
           <span class="stat-lbl">Gesamtzeit</span>
         </div>
       </div>
-      <button class="export-btn" (click)="exportResults()">Ergebnisse exportieren</button>
+
+      <div class="survey-complete">
+        <h3>Umfrage abschließen</h3>
+        <p>
+          Bitte beantworten Sie nun den Rest der Umfrage.
+        </p>
+        <a
+          class="survey-link"
+          href="https://docs.google.com/forms/d/e/1FAIpQLScNdtZsKXX25wtZlesiO-mgqZwDyLEY2erW6oR6vAdoW6wWgw/viewform?usp=dialog"
+          target="_blank"
+        >
+          Zur Umfrage
+        </a>
+      </div>
+
+      <div class="export-section">
+        <h3>Ergebnisse senden</h3>
+        <p>
+          Exportieren Sie die CSV- und JSON-Datei und senden Sie diese an:
+        </p>
+        <strong class="email-addr">study.glyphspace.lilia@godlikepc.de</strong>
+      </div>
+
+      <button class="export-btn" (click)="exportResults()">CSV & JSON exportieren</button>
       <button class="reset-btn" (click)="resetSession()">Neue Sitzung</button>
     </div>
   </ng-container>
