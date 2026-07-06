@@ -38,6 +38,11 @@
 
       <!-- UPLOAD / EXPORT -->
       <div class="icon-panel">
+        <button (click)="reload()" [disabled]="studyActive" [class.disabled]="studyActive" title="Reload dataset">
+          <span class="material-icons">refresh</span>
+          <span class="btn-label">Reload</span>
+        </button>
+
         <button (click)="upload()" [disabled]="studyActive" [class.disabled]="studyActive">
           <span class="material-icons">upload</span>
           <span class="btn-label">Upload</span>

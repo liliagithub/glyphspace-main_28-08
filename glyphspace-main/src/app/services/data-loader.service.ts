@@ -188,6 +188,75 @@ export class DataLoaderService {
     }
   }
 
+  public async reloadCurrentDataset(): Promise<void> {
+    const name = this.config.loadedData;
+    if (!name) return;
+
+    const entry = this.collectionSvc.getCollectionEntry(name);
+    if (!entry) return;
+
+    this.cacheSvc.deleteDataset(name);
+    this.filterService.clearFilters();
+
+    if (entry.source === 'local') {
+      await this.reloadLocalDataset(name, entry);
+    } else {
+      const timestamp = entry.items.at(0)?.time;
+      if (timestamp) {
+        await this.loadDataSet(name, timestamp);
+      }
+    }
+
+    const glyphMap = this.cacheSvc.getGlyphMap(name);
+    if (glyphMap) {
+      this.filterService.totalItems = glyphMap.size;
+      this.filterService.filteredItems = glyphMap.size;
+      this.filterService.setActiveGlyphData(glyphMap);
+    }
+
+    this.config.updateConfiguration();
+    this.config.loadData(name);
+  }
+
+  private reloadLocalDataset(name: string, entry: DatasetCollectionEntry): Promise<void> {
+    const basePath = 'assets/data/';
+    const item = entry.items.at(0);
+    if (!item) return Promise.resolve();
+
+    const algos = item.algorithms;
+    const requests: Record<string, Observable<unknown>> = {
+      schema: this.http.get<GlyphSchema>(basePath + algos.schema),
+      meta: this.http.get<GlyphMeta>(basePath + algos.meta),
+      feature: this.http.get<GlyphFeature[]>(basePath + algos.feature),
+    };
+
+    const positionKeys = Object.keys(algos.position);
+    positionKeys.forEach(posKey => {
+      requests[posKey] = this.http.get<GlyphPosition[]>(basePath + algos.position[posKey]);
+    });
+
+    return new Promise<void>((resolve, reject) => {
+      forkJoin(requests).subscribe({
+        next: result => {
+          const schema = result['schema'] as GlyphSchema;
+          const feature = result['feature'] as GlyphFeature[];
+          const positions = new Map<string, GlyphPosition[]>();
+          positionKeys.forEach(posKey => {
+            positions.set(posKey, result[posKey] as GlyphPosition[]);
+          });
+
+          this.cacheSvc.buildDataSet(name, item.time, schema, result['meta'] as GlyphMeta, feature, positions);
+          resolve();
+        },
+        error: err => {
+          console.error(`[DataLoader] Failed to reload dataset "${name}":`, err);
+          this.toast.error(`Failed to reload dataset "${name}"`);
+          reject(err);
+        },
+      });
+    });
+  }
+
   public async deleteDataset(datasetName: string): Promise<boolean> {
     const entry = this.collectionSvc.getCollectionEntry(datasetName);
 

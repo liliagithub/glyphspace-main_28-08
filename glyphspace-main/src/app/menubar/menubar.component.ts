@@ -67,6 +67,10 @@ export class MenuBarComponent implements OnInit, OnDestroy {
     this.configService.loadData(name);
   }
 
+  reload() {
+    this.dataLoader.reloadCurrentDataset();
+  }
+
   upload() {
     this.showWizard = true;
     this.configService.modalOpen = true;
