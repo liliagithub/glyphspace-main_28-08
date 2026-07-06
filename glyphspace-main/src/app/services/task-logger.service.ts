@@ -694,15 +694,17 @@ export class TaskLoggerService {
     const jsonUrl = URL.createObjectURL(jsonBlob);
     const csvUrl = URL.createObjectURL(csvBlob);
 
+    const prefix = session.participantId ? session.participantId + '_' : '';
+
     const jsonA = document.createElement('a');
     jsonA.href = jsonUrl;
-    jsonA.download = 'task-session-' + session.id + '.json';
+    jsonA.download = prefix + 'task-session-' + session.id + '.json';
     jsonA.click();
     URL.revokeObjectURL(jsonUrl);
 
     const csvA = document.createElement('a');
     csvA.href = csvUrl;
-    csvA.download = 'task-session-' + session.id + '.csv';
+    csvA.download = prefix + 'task-session-' + session.id + '.csv';
     csvA.click();
     URL.revokeObjectURL(csvUrl);
   }
