@@ -3,11 +3,15 @@ name: Deploy Angular to GitHub Pages
 on:
   push:
     branches:
-      - main  # or master, depending on your default branch
+      - main
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: glyphspace-main
 
     steps:
       - name: ⬇️ Checkout repo
@@ -33,4 +37,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist/glyphspace/browser/
           publish_branch: gh-pages
-          enable_jekyll: false  # this adds the .nojekyll file automatically
+          enable_jekyll: false
