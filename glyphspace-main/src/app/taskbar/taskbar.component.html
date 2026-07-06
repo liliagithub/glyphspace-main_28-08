@@ -202,7 +202,7 @@
     </div>
 
     <div class="actions">
-      <button class="skip-btn" (click)="skipTask()">Überspringen</button>
+      <button class="skip-btn" (click)="skipTask()" disabled>Überspringen</button>
       <button class="next-btn" (click)="nextTask()" [disabled]="!hasSolution()">
         {{ isLastTask() ? 'Abschließen' : 'Weiter →' }}
       </button>

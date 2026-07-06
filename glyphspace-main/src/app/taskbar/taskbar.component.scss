@@ -513,9 +513,14 @@
     cursor: pointer;
     transition: all 0.15s;
 
-    &:hover {
+    &:hover:not(:disabled) {
       background: #f8f9fa;
       border-color: #95a5a6;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
     }
   }
 
