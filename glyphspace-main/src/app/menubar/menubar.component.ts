@@ -6,6 +6,7 @@ import { DataLoaderService } from '../services/data-loader.service';
 import { FilterService } from '../services/filter.service';
 import { DataExportService } from '../services/data-export.service';
 import { ConfigService } from '../services/config.service';
+import { TaskLoggerService } from '../services/task-logger.service';
 
 @Component({
   selector: 'app-menubar',
@@ -31,8 +32,13 @@ export class MenuBarComponent implements OnInit, OnDestroy {
     private dataLoader: DataLoaderService,
     private filterService: FilterService,
     private dataExport: DataExportService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    public taskLogger: TaskLoggerService
   ) {}
+
+  get studyActive(): boolean {
+    return this.taskLogger.studyStarted && this.taskLogger.currentTaskIndex < this.taskLogger.taskDefinitions.length;
+  }
 
   ngOnInit(): void {
     this.dataSub.add(

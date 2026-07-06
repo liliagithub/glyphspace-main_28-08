@@ -38,17 +38,17 @@
 
       <!-- UPLOAD / EXPORT -->
       <div class="icon-panel">
-        <button (click)="upload()">
+        <button (click)="upload()" [disabled]="studyActive" [class.disabled]="studyActive">
           <span class="material-icons">upload</span>
           <span class="btn-label">Upload</span>
         </button>
 
-        <button (click)="download()">
+        <button (click)="download()" [disabled]="studyActive" [class.disabled]="studyActive">
           <span class="material-icons">download</span>
           <span class="btn-label">Export</span>
         </button>
 
-        <button (click)="screenshot()" title="Save canvas as PNG">
+        <button (click)="screenshot()" title="Save canvas as PNG" [disabled]="studyActive" [class.disabled]="studyActive">
           <span class="material-icons">photo_camera</span>
           <span class="btn-label">Screenshot</span>
         </button>
@@ -57,11 +57,11 @@
       <!-- CANVAS -->
       <div class="canvas-control">
         <span class="label">Canvas</span>
-        <button class="add-btn" (click)="addCanvas.emit()" [disabled]="totalCells >= 4">
+        <button class="add-btn" (click)="addCanvas.emit()" [disabled]="totalCells >= 4 || studyActive" [class.disabled]="studyActive">
           <span class="material-icons">add</span>
           <span class="btn-label">Add</span>
         </button>
-        <button class="add-btn fit-btn" (click)="fitAll()" title="Fit all">
+        <button class="add-btn fit-btn" (click)="fitAll()" title="Fit all" [disabled]="studyActive" [class.disabled]="studyActive">
           <span class="material-icons">fullscreen</span>
           <span class="btn-label">Fit all</span>
         </button>
