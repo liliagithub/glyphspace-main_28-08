@@ -6,6 +6,7 @@ import { RenderTask } from '../../shared/enum/render-task';
 import { SpatialGrid } from '../../shared/helpers/spatial-grid';
 import { ZoomLevel } from '../../shared/enum/zoom-level';
 import {
+  disposeObject,
   hitTest,
   hitTestCandidates,
   nearlyEqual,
@@ -134,7 +135,10 @@ export class CanvasRendererService {
     glyphData.forEach((glyph: GlyphObject) => {
       const cacheObject = glyph.getCacheObject(canvasId, selectedTimestamp, selectedAlgorithm);
       const oldMesh = cacheObject.mesh;
-      if (oldMesh) this.glyphGroup.remove(oldMesh);
+      if (oldMesh) {
+        this.glyphGroup.remove(oldMesh);
+        disposeObject(oldMesh);
+      }
       if (cacheObject.visible || force) {
         const mesh = glyph.render(
           this.sizeInfo,
@@ -161,7 +165,10 @@ export class CanvasRendererService {
     renderConfig: GlyphRenderConfig
   ): void {
     const mesh = glyph.getMesh(selectedTimestamp, selectedAlgorithm, canvasId);
-    if (mesh !== undefined) this.glyphGroup.remove(mesh);
+    if (mesh !== undefined) {
+      this.glyphGroup.remove(mesh);
+      disposeObject(mesh);
+    }
 
     const newMesh = glyph.render(
       this.sizeInfo,
@@ -415,7 +422,10 @@ export class CanvasRendererService {
       lensSize.radius = lensSize.radius * LENS_ENLARGEMENT_FACTOR;
 
       const mesh = glyph.getMesh(selectedTimestamp, selectedAlgorithm, canvasId);
-      if (mesh !== undefined) this.glyphGroup.remove(mesh);
+      if (mesh !== undefined) {
+        this.glyphGroup.remove(mesh);
+        disposeObject(mesh);
+      }
       const newMesh = glyph.render(lensSize, selectedTimestamp, selectedAlgorithm, canvasId, aggregated, renderConfig);
       if (newMesh) this.glyphGroup.add(newMesh);
     });
@@ -453,19 +463,7 @@ export class CanvasRendererService {
   }
 
   dispose(): void {
-    this.scene?.traverse(obj => {
-      if ((obj as THREE.Mesh).geometry) {
-        (obj as THREE.Mesh).geometry.dispose();
-      }
-      if ((obj as THREE.Mesh).material) {
-        const material = (obj as THREE.Mesh).material;
-        if (Array.isArray(material)) {
-          material.forEach(m => m.dispose());
-        } else {
-          material.dispose();
-        }
-      }
-    });
+    disposeObject(this.scene);
 
     this.renderer?.forceContextLoss?.();
     if (this.renderer) {

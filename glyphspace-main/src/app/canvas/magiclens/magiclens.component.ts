@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { GlyphObject } from '../../glyph/glyph-object';
 import { ZoomLevel } from '../../shared/enum/zoom-level';
 import { getGlyphFromObject } from '../../shared/helpers/glyph-helper';
-import { hitTest, screenToWorld } from '../../shared/helpers/three-helper';
+import { disposeObject, hitTest, screenToWorld } from '../../shared/helpers/three-helper';
 import { ConfigService } from '../../services/config.service';
 import { DataProcessorService } from '../../services/data-processor';
 import { GlyphSizeInfo } from '../../glyph/glyph-size-info';
@@ -104,8 +104,16 @@ export class MagiclensComponent implements AfterViewInit, OnDestroy {
     this.lensScene = null!;
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- intentional cleanup to release camera reference
     this.lensCamera = null!;
-    this.lensGlyphGroup.clear();
+    this.disposeLensGroup();
     this.lensRenderer.dispose();
+  }
+
+  /** Dispose all children of the lens glyph group to free GPU memory */
+  private disposeLensGroup(): void {
+    for (const child of this.lensGlyphGroup.children) {
+      disposeObject(child);
+    }
+    this.lensGlyphGroup.clear();
   }
 
   toggle(lastMousePosition: THREE.Vector2, doToggle = true): void {
@@ -183,7 +191,7 @@ export class MagiclensComponent implements AfterViewInit, OnDestroy {
 
   renderMagicLensGlyphs(timestamp: string, algorithm: string): void {
     const startTime = performance.now();
-    this.lensGlyphGroup.clear();
+    this.disposeLensGroup();
 
     // Adaptive limit based on previous performance
     const glyphsToRender =

@@ -7,6 +7,7 @@ import { GlyphCacheObject } from './glyph-cache-object';
 import { GlyphType } from '../shared/enum/glyph-type';
 import { GlyphSizeInfo } from './glyph-size-info';
 import { GlyphRenderContext, getGlyphRenderer } from './renderers/glyph-renderer';
+import { disposeObject } from '../shared/helpers/three-helper';
 import { ThumbnailRenderer } from './renderers/thumbnail.renderer';
 import { getCachedCircleGeometry, getCachedRingGeometry, getCachedBasicMaterial } from './renderers/shared-rendering';
 import { GlyphRenderConfig } from './glyph-render-config';
@@ -91,8 +92,11 @@ export class GlyphObject {
     clustered: boolean,
     renderConfig: GlyphRenderConfig
   ): THREE.Object3D | null {
-    const mesh = this.renderGlyph(sizeInfo, timestamp, algorithm, owner, clustered, renderConfig);
     const cacheObject = this.getCacheObject(owner, timestamp, algorithm);
+    if (cacheObject.mesh) {
+      disposeObject(cacheObject.mesh);
+    }
+    const mesh = this.renderGlyph(sizeInfo, timestamp, algorithm, owner, clustered, renderConfig);
     if (mesh) cacheObject.mesh = mesh;
     return mesh;
   }

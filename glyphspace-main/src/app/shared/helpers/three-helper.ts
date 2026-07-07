@@ -195,6 +195,40 @@ export function scalePosition(
   return { x: scaledX, y: scaledY };
 }
 
+/**
+ * Traverse a Three.js Object3D tree and dispose all GPU resources (geometries, materials).
+ * Shared cached geometries (CircleGeometry, RingGeometry) are skipped to avoid
+ * breaking other meshes that reference the same cached instances.
+ */
+export function disposeObject(obj: THREE.Object3D): void {
+  obj.traverse(child => {
+    const mesh = child as THREE.Mesh;
+    if (mesh.isMesh) {
+      if (mesh.geometry) {
+        const isShared =
+          mesh.geometry instanceof THREE.CircleGeometry ||
+          mesh.geometry instanceof THREE.RingGeometry;
+        if (!isShared) {
+          mesh.geometry.dispose();
+        }
+      }
+      if (mesh.material) {
+        if (Array.isArray(mesh.material)) {
+          mesh.material.forEach(m => m.dispose());
+        } else {
+          mesh.material.dispose();
+        }
+      }
+    }
+    // Handle three/examples Line2 objects
+    const line2 = child as any;
+    if (line2.isLine2) {
+      line2.geometry?.dispose();
+      line2.material?.dispose();
+    }
+  });
+}
+
 export function nearlyEqual(a: number, b: number, epsilon = 0.01): boolean {
   return Math.abs(a - b) < epsilon;
 }
